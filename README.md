@@ -1,94 +1,117 @@
-# Tree Hole (树洞) 🌳
+# 🌳 Soul Tree Hole (心灵树洞)
 
 ## 📖 项目简介
-这是一个基于 **Spring Boot** 和 **MyBatis** 构建的树洞社区练习项目，专注于探索 Web 开发的核心流程与安全机制。
+**Soul Tree Hole** 是一个基于 **Spring Boot** 和 **MyBatis** 构建的匿名社交树洞平台。项目旨在为用户提供一个安全、私密的倾诉空间。
 
-与常见的 CRUD 项目不同，本项目在**用户交互**与**安全验证**上下了大量功夫。前端摒弃了庞大的框架，采用**原生 HTML/CSS/JS** 打造了丝滑的视觉体验；后端实现了**七种不同类型的验证码系统**，涵盖了从传统字符到图形交互的多种验证逻辑。
+本项目不仅仅是一个简单的 CRUD 练习，更是一个在**用户交互体验**、**安全验证机制**和**业务逻辑完整性**上追求极致的 Web 全栈项目。前端完全采用**原生 JavaScript** 实现，摒弃了 Vue/React 等框架的依赖，回归 Web 开发的本源，展现了扎实的 DOM 操作与事件处理功底。
 
-## ✨ 核心亮点
+## ✨ 核心亮点与实现原理
 
-### 🛡️ 深度定制的验证码系统
-项目集成了七种验证方式，并支持**随机热切换**：
-1.  **滑动拼图验证 (Jigsaw)**：仿主流滑块验证，支持容错校验。
-2.  **文字点选验证 (TextClick)**：根据提示按顺序点击图片中的汉字。
-3.  **GalGame 趣味验证**：二次元风格的“色觉/角色辨识”验证。
-4.  **Hutool 图形验证**：线段干扰、圆圈干扰、扭曲干扰、GIF 动态验证。
+### 🛡️ 七重安全验证卫士 (Captcha System)
+本项目实现了一套高度可配置、支持热切换的混合验证码系统，有效抵御自动化脚本攻击。
 
-### 🎨 极致的前端体验
-- **动态沉浸背景**：原生 JS 实现的飘落树叶动画，每一片树叶的轨迹、大小、透明度均为随机生成。
-- **电影级转场**：登录成功后，页面会触发“隧道穿梭”效果，通过 CSS3 `transform: scale` 与 `opacity` 配合，实现从登录框飞入主页的视觉体验。
-- **无依赖实现**：手写拖拽逻辑、弹窗管理器和 AJAX 请求封装，展示扎实的 DOM 操作功底。
+#### 1. 滑动拼图验证 (Jigsaw Captcha) - *交互与安全的平衡*
+*   **核心逻辑**：
+    *   **后端 (`CaptchaUtil.java`)**：使用 Java 2D `GeneralPath` 绘制不规则拼图形状。随机生成缺口坐标 `(x, y)`，从原图中裁剪出滑块并添加描边，同时在原图绘制半透明蒙版。将正确的 `x` 坐标加密存储于 `HttpSession`。
+    *   **前端**：监听 `mousedown/mousemove/mouseup` 事件实现拖拽。用户松开时，计算滑块位移并发送给后端。
+    *   **校验**：后端比对用户提交的偏移量与 Session 中的值，允许 **±5px** 的误差范围，兼顾安全性与用户体验。
 
-## 🔧 核心功能实现原理 (前后端交互解密)
+#### 2. 文字点选验证 (TextClick Captcha) - *高强度人机识别*
+*   **核心逻辑**：
+    *   **后端**：随机选取 3 个汉字（如“梦、云、海”），随机颜色、角度绘制在背景图上。采用简单的**碰撞检测算法**防止文字重叠。将 3 个汉字的中心坐标列表存入 Session。
+    *   **前端**：用户点击图片时，在点击处动态生成数字标记 (1, 2, 3)。
+    *   **校验**：计算用户点击坐标与预存坐标的**欧氏距离**。只有当每个点击点都在对应汉字的判定半径（30px）内时，验证通过。
 
-### 1. 滑动拼图验证 (Jigsaw Captcha)
-这是本项目最复杂的验证类型，实现了类似极验的交互效果。
-*   **后端逻辑 (`CaptchaUtil.java`)**：
-    *   利用 Java 2D API (`GeneralPath`) 绘制拼图形状。
-    *   随机生成缺口坐标 `(x, y)`。
-    *   **图像处理**：从原图中裁剪出拼图块，添加白色描边；在原图缺口处绘制半透明黑色蒙版。
-    *   **状态存储**：将正确的 `x` 坐标存入 `HttpSession`，用于后续比对。
-    *   **响应**：返回背景图和拼图块的 Base64 编码。
-*   **前端交互**：
-    *   监听鼠标 `mousedown`, `mousemove`, `mouseup` 事件实现滑块拖拽。
-    *   用户松开鼠标时，计算滑块相对于起点的偏移量。
-*   **验证机制**：
-    *   前端将偏移量作为 `captcha` 参数提交。
-    *   后端允许 **5px 的误差范围** (`Math.abs(userX - storedX) <= 5`)，提高用户体验。
+#### 3. GalGame 趣味验证 - *二次元特色*
+*   **核心逻辑**：
+    *   **自动分类**：后端启动时扫描 `static/captchaForGal` 目录，根据文件名（如`白毛1.jpg`, `紫毛2.jpg`）自动提取特征标签。
+    *   **出题逻辑**：随机选择一个“目标特征”（如“白毛”），并从其他分类中随机抽取干扰图片，组成选项列表。
+    *   **校验**：比对用户选择的图片索引与正确答案索引。
 
-### 2. 文字点选验证 (TextClick Captcha)
-*   **后端逻辑**：
-    *   随机选取 3 个汉字（如“树、洞、心”），随机颜色、随机旋转角度绘制在背景图上。
-    *   简单的碰撞检测算法，确保文字不重叠。
-    *   将 3 个汉字的中心坐标 `List<Point>` 存入 Session。
-*   **前端交互**：
-    *   用户点击图片时，在点击处生成数字标记。
-    *   记录点击坐标序列，格式化为 `x1,y1;x2,y2;x3,y3` 提交。
-*   **验证机制**：
-    *   后端解析坐标串，依次计算用户点击点与正确坐标的**欧氏距离**。
-    *   设定判定半径（如 30px），点得稍微歪一点也能通过。
+#### 4. 常规图形验证 - *Hutool 强力驱动*
+*   集成 Hutool 工具库，提供线段干扰、圆圈干扰、扭曲干扰、GIF 动态帧四种基础验证模式，作为备用方案。
 
-### 3. GalGame 趣味验证
-*   **逻辑**：
-    *   后端扫描 `static/captchaForGal` 目录，根据文件名（如`白毛1.jpg`）自动分类图片。
-    *   随机抽取一个“目标特征”（如“白毛”），并混入其他特征的图片作为干扰项。
-    *   前端渲染图片列表，用户点击图片后直接提交图片索引进行验证。
+---
 
-### 4. 统一登录流程
-*   **API 设计**：`/user/login` 接口接收 `username`, `password`, `captcha`。
-*   **策略分发**：
-    *   `UserService` 根据 Session 中的 `CAPTCHA_TYPE_KEY` 判断当前验证码类型。
-    *   如果是 **Jigsaw**，解析数字并比对误差。
-    *   如果是 **TextClick**，解析坐标并比对距离。
-    *   如果是 **String** (常规验证码)，进行忽略大小写的字符串比对。
-*   **安全防护**：
-    *   验证码一次有效，验证完成后立即从 Session 清除。
-    *   验证码设置了超时时间（防止重放攻击）。
+### 💻 业务功能与架构设计
 
-## 🛠️ 技术栈
+#### 1. 树洞内容管理 (Hole Core)
+*   **匿名/实名发布**：支持用户发布树洞内容，可选择分类。未登录用户发布时 `userId` 记录为 0（匿名状态）。
+*   **分页查询**：实现基于偏移量 (`offset`) 的分页算法，支持按 `category`（类别）或 `userId`（我的树洞）筛选。
+*   **点赞系统**：
+    *   实现**状态反转**逻辑：用户点击点赞时，后端先查询 `checkLike`。若已赞则执行 `delete`（取消点赞），若未赞则执行 `insert`（点赞），并更新总点赞数。
+    *   **并发安全**：点赞数更新使用数据库原子操作 `update like_count = like_count + 1`，避免并发覆盖问题。
 
-- **后端**：Spring Boot 3.x, MyBatis, Hutool (核心工具库)
-- **前端**：HTML5, CSS3, 原生 JavaScript (ES6+)
-- **数据库**：MySQL 8.0
+#### 2. 评论与互动 (Comment System)
+*   **二级内容结构**：树洞 (Hole) -> 评论 (Comment)。
+*   **评论点赞**：复用了点赞系统的逻辑，实现了对评论的独立点赞功能。
 
-## 🚀 快速开始
+#### 3. 用户与会话 (User & Session)
+*   **状态管理**：使用 `HttpSession` 存储用户登录态 (`USER_ID`)。全站接口通过拦截器或在 Controller 层校验 Session 状态。
+*   **游客模式**：允许未登录用户浏览内容，但限制点赞、评论等写操作，引导用户注册。
 
-1.  **数据库准备**：确保 MySQL 服务开启，并配置 `application.yml` 中的连接信息。
-2.  **启动项目**：运行 `TreeHoleApplication.java`。
-3.  **访问**：打开浏览器访问 `http://localhost:8080/login.html`。
+#### 4. 前端沉浸式体验 (Frontend Magic)
+*   **动态背景系统**：
+    *   **落叶动画**：使用原生 JS 定时器动态创建 DOM 元素，通过 CSS3 `animation` 控制下落轨迹、旋转角度和透明度渐变，模拟真实的秋日氛围。
+    *   **背景视差**：登录页与主页采用不同的背景图，营造空间感。
+*   **电影级转场**：
+    *   登录成功瞬间，触发 CSS3 `transform: scale(5)` 与 `opacity` 组合动画，实现“隧道穿越”般的视觉冲击，无缝切换至主页。
+*   **原生组件封装**：
+    *   **ModalManager**：手写模态框类，管理弹窗的打开、关闭、堆叠层级 (`z-index`)。
+    *   **Toast提示**：封装轻量级消息提示框，替代丑陋的 `alert`。
 
-## 📂 目录结构
+## 🛠️ 技术栈清单
+
+### 后端 (Backend)
+- **Framework**: Spring Boot 3.x (极速开发)
+- **ORM**: MyBatis (灵活的 SQL 控制)
+- **Database**: MySQL 8.0 (数据持久化)
+- **Tools**: Hutool (瑞士军刀般的 Java 工具库)
+- **Build**: Maven
+
+### 前端 (Frontend)
+- **Core**: HTML5, CSS3, Vanilla JavaScript (ES6+)
+- **Network**: Fetch API (现代化的网络请求)
+- **Icons**: RemixIcon (精美开源图标库)
+
+## 🚀 快速启动指南
+
+### 1. 环境准备
+- JDK 17 或更高版本
+- MySQL 8.0+
+- Maven 3.6+
+
+### 2. 数据库配置
+1. 创建数据库：`CREATE DATABASE tree_hole DEFAULT CHARACTER SET utf8mb4;`
+2. 导入数据表结构（参考 `entry` 包下的实体类字段）。
+3. 修改配置文件 `src/main/resources/application.yml`：
+   ```yaml
+   spring:
+     datasource:
+       url: jdbc:mysql://localhost:3306/tree_hole?serverTimezone=Asia/Shanghai&useSSL=false
+       username: root  # 你的数据库账号
+       password: root  # 你的数据库密码
+   ```
+
+### 3. 运行项目
+在项目根目录下执行：
+```bash
+mvn spring-boot:run
+```
+或在 IDEA 中运行 `TreeHoleApplication.java`。
+
+访问地址：`http://localhost:8080/login.html`
+
+## 📂 核心目录结构
 ```
 src/main/java/org/example/treehole/
-├── controller/      # 控制层 (User, Captcha 等接口)
-├── service/         # 业务层 (登录逻辑、验证码校验)
-├── mapper/          # 持久层 (MyBatis Interface)
-├── util/            # 工具类 (CaptchaUtil 核心绘图逻辑)
+├── controller/      # 控制层：接收前端请求 (HoleController, UserController)
+├── service/         # 业务层：核心逻辑 (HoleService, CommentService)
+├── mapper/          # 持久层：MyBatis 接口
+├── entry/           # 实体类：Hole, User, Comment
+├── util/            # 工具类：CaptchaUtil (核心验证码生成逻辑)
 └── ...
-src/main/resources/
-├── static/          # 前端静态资源 (HTML/CSS/JS/Images)
-└── mapper/          # MyBatis XML 映射文件
 ```
 
 ---
-*Talk is cheap, show me the code.*
+*本项目代码清晰，注释详尽，适合作为 Java Web 入门进阶的参考案例。*
