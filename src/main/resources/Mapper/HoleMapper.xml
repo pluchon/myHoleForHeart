@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.treehole.mapper.HoleMapper">
+
+    <select id="queryAll" resultType="org.example.treehole.entry.Hole">
+        SELECT 
+            h.*, 
+            u.nickname as userNickname, 
+            u.avatar as userAvatar,
+            <if test="userId != null and userId != 0">
+               (CASE WHEN hl.hole_id IS NOT NULL THEN 1 ELSE 0 END) as isLiked
+            </if>
+            <if test="userId == null or userId == 0">
+               0 as isLiked
+            </if>
+        FROM hole h
+        LEFT JOIN user u ON h.user_id = u.id
+        <if test="userId != null and userId != 0">
+            LEFT JOIN hole_like hl ON h.id = hl.hole_id AND hl.user_id = #{userId}
+        </if>
+        <where>
+            <if test="category != null and category != '' and category != 'all'">
+                AND h.category = #{category}
+            </if>
+        </where>
+        ORDER BY h.id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+</mapper>

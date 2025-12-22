@@ -1,0 +1,744 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>树洞 - 登录/注册</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=26">
+    <style>
+        :root {
+            --primary-color: #52c41a;
+            --hover-color: #73d13d;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* 恢复垂直居中 */
+            background-image: url('/picture/login.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden; /* 防止落叶导致滚动条 */
+        }
+        
+        /* 移除全局模糊遮罩 */
+        body::before {
+            display: none !important;
+        }
+
+        /* 落叶特效 */
+        .falling-leaf {
+            position: absolute;
+            top: -50px;
+            pointer-events: none;
+            z-index: 9999;
+            /* 移除 animation 属性，由 JS 动态添加 */
+        }
+        
+        /* 定义下落关键帧，包含透明度消失 */
+        @keyframes fall {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--end-x), var(--end-y)) rotate(720deg); opacity: 0; }
+        }
+
+        /* 转场特效层 */
+        .hole-transition-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hole-tunnel {
+            width: 100vmax;
+            height: 100vmax;
+            background: radial-gradient(circle, transparent 0%, #000 70%);
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 1.2s cubic-bezier(0.7, 0, 0.3, 1);
+        }
+        body.zooming-in .container {
+            transform: scale(2);
+            opacity: 0;
+            transition: all 0.8s ease-in;
+        }
+
+        .container { 
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            width: 350px; 
+            backdrop-filter: blur(5px);
+        }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #666; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background-color: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #40a9ff; }
+        .switch-link { text-align: center; margin-top: 15px; font-size: 14px; }
+        .switch-link a { color: #1890ff; cursor: pointer; text-decoration: none; }
+        .hidden { display: none; }
+        #message { margin-top: 10px; text-align: center; font-size: 14px; height: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+        .captcha-row { display: flex; align-items: center; gap: 10px; }
+        .captcha-img { cursor: pointer; height: 35px; border: 1px solid #ddd; border-radius: 4px; }
+        .captcha-switch {
+            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.3s;
+            margin-left: auto; /* 向右对齐 */
+        }
+        .captcha-switch:hover {
+            background: #f0f0f0;
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+        
+        /* 图标旋转动画 */
+        @keyframes spin-icon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spin-anim {
+            animation: spin-icon 0.5s ease-in-out;
+        }
+
+        .footer-legal {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        /* GalGame Modal */
+        .gal-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        .gal-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .gal-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 90%;
+        }
+        .gal-images {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        .gal-img-item {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 4px solid transparent;
+            border-radius: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .gal-img-item:hover {
+            transform: scale(1.1);
+            border-color: #ff69b4; /* 粉色边框 */
+            box-shadow: 0 8px 16px rgba(255, 105, 180, 0.3);
+        }
+    </style>
+</head>
+<body>
+<div class="hole-transition-layer">
+    <div class="hole-tunnel"></div>
+</div>
+
+<div class="container">
+    <!-- 登录表单 -->
+    <div id="login-box">
+        <h2>登录树洞</h2>
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="login-username" placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="login-password" placeholder="请输入密码">
+        </div>
+        <div class="form-group">
+            <label>验证码</label>
+            <div class="captcha-row">
+                <input type="text" id="login-captcha" placeholder="验证码" style="width: 120px;">
+                <img id="captcha-img" src="/user/captcha" class="captcha-img" onclick="refreshCaptcha()" title="看不清？点击刷新">
+                <div class="captcha-switch" onclick="switchCaptchaType()" title="切换验证方式"><i class="ri-refresh-line"></i></div>
+            </div>
+        </div>
+        <button onclick="doLogin()">登 录</button>
+        <div class="switch-link">
+            还没有账号？<a onclick="showRegister()">去注册</a>
+            <span style="margin: 0 5px; color: #ccc;">|</span>
+            <a onclick="guestLogin()" style="color: #666;">游客模式</a>
+        </div>
+    </div>
+
+    <!-- 注册表单 -->
+    <div id="register-box" class="hidden">
+        <h2>注册新用户</h2>
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="reg-username" placeholder="设置用户名">
+        </div>
+        <div class="form-group">
+            <label>昵称</label>
+            <input type="text" id="reg-nickname" placeholder="设置昵称">
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="reg-password" placeholder="设置密码">
+        </div>
+        <button onclick="doRegister()">注 册</button>
+        <div class="switch-link">
+            已有账号？<a onclick="showLogin()">去登录</a>
+        </div>
+    </div>
+    
+    <div id="message"></div>
+</div>
+
+<!-- GalGame 验证弹窗 -->
+<div id="gal-modal" class="gal-modal">
+    <div class="gal-box">
+        <h3 id="gal-question" style="color: #333; margin-bottom: 10px;">题目加载中...</h3>
+        <p style="font-size: 12px; color: #666;">请点击正确的图片完成验证</p>
+        <div class="gal-images" id="gal-images-container">
+            <!-- 动态加载图片 -->
+        </div>
+        <button onclick="closeGalModal()" style="margin-top: 20px; background: #999; width: auto; padding: 8px 20px;">取消验证</button>
+    </div>
+</div>
+
+<!-- 滑动拼图模态框 -->
+<div id="jigsaw-modal" class="gal-modal">
+    <div class="gal-box" style="width: 340px;">
+        <h3 style="margin-bottom:10px;">拖动滑块完成拼图</h3>
+        <div style="position:relative; width:300px; height:150px; margin:0 auto; overflow:hidden; border-radius: 4px; user-select: none;">
+            <img id="jigsaw-bg" draggable="false" style="width:100%; height:100%; display:block; user-select: none; pointer-events: none;">
+            <img id="jigsaw-block" draggable="false" style="position:absolute; top:0; left:0; width:50px; height:50px; display:block; user-select: none;">
+        </div>
+        <div id="jigsaw-track" style="position:relative; width:300px; height:40px; background:#f7f9fa; margin:15px auto; border-radius:2px; border: 1px solid #e4e7eb; user-select:none; overflow: hidden;">
+            <div id="jigsaw-progress" style="position:absolute; top:0; left:0; width:0; height:100%; background:#76c61d; z-index:1;"></div>
+            <div style="position:absolute; top:0; left:0; width:100%; height:100%; text-align:center; line-height:40px; color:#999; z-index:2; font-size:14px; pointer-events: none;">按住滑块拖动</div>
+            <div id="jigsaw-slider" style="position:absolute; top:0; left:0; width:50px; height:40px; background:#fff; border-right: 1px solid #e4e7eb; cursor:pointer; display:flex; justify-content:center; align-items:center; z-index:3; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
+                <i class="ri-arrow-right-line" style="color:#666;"></i>
+            </div>
+        </div>
+        <button onclick="closeJigsawModal()" style="margin-top:10px; background:#999; width: auto; padding: 8px 20px;">取消</button>
+    </div>
+</div>
+
+<!-- 文字点选模态框 -->
+<div id="textclick-modal" class="gal-modal">
+    <div class="gal-box" style="width: 340px;">
+        <h3 style="margin-bottom:5px;">请按顺序点击：<span id="textclick-words" style="color:#1890ff; font-weight:bold; font-size: 1.2em;"></span></h3>
+        <div style="position:relative; width:300px; height:150px; margin:10px auto; cursor:pointer; overflow:hidden; border-radius: 4px;" id="textclick-area">
+            <img id="textclick-bg" style="width:100%; height:100%; display:block;">
+            <!-- 标记点将追加到此处 -->
+        </div>
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
+            <button onclick="closeTextClickModal()" style="background:#999; width: auto; padding: 8px 20px;">取消</button>
+            <button onclick="resetTextClick()" style="background:#faad14; width: auto; padding: 8px 20px;">重置</button>
+            <button onclick="refreshTextClick()" style="background:#1890ff; width: auto; padding: 8px 20px;">刷新图片</button>
+        </div>
+    </div>
+</div>
+
+<div class="footer-legal">
+    本网站仅供学习交流使用，请勿发布违反法律法规的内容。<br>
+    Copyright © 2025 TreeHole. All Rights Reserved.
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8080/user'; // 根据你的后端端口调整
+
+    function showRegister() {
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('register-box').classList.remove('hidden');
+        clearMsg();
+    }
+
+    function showLogin() {
+        document.getElementById('register-box').classList.add('hidden');
+        document.getElementById('login-box').classList.remove('hidden');
+        clearMsg();
+    }
+
+    function showMsg(text, type) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.innerText = text;
+        msgDiv.className = type;
+    }
+    
+    function clearMsg() {
+        document.getElementById('message').innerText = '';
+    }
+
+    const captchaTypes = ['line', 'circle', 'shear', 'gif', 'galgame', 'jigsaw', 'textclick'];
+    let currentCaptchaIndex = 0;
+
+    function refreshCaptcha() {
+        const type = captchaTypes[currentCaptchaIndex];
+        const captchaInput = document.getElementById('login-captcha');
+        const captchaImg = document.getElementById('captcha-img');
+        
+        if (type === 'galgame' || type === 'jigsaw' || type === 'textclick') {
+            captchaInput.style.display = 'none';
+            captchaImg.style.display = 'none';
+        } else {
+            captchaInput.style.display = 'block';
+            captchaImg.style.display = 'block';
+            captchaImg.src = `${API_BASE}/captcha?type=${type}&t=${new Date().getTime()}`;
+        }
+    }
+
+    function switchCaptchaType() {
+        // 随机切换逻辑
+        let newIndex = currentCaptchaIndex;
+        // 确保切换到不同的类型
+        if (captchaTypes.length > 1) {
+            while (newIndex === currentCaptchaIndex) {
+                newIndex = Math.floor(Math.random() * captchaTypes.length);
+            }
+            currentCaptchaIndex = newIndex;
+        }
+
+        refreshCaptcha();
+        
+        // 添加动画
+        const switchBtn = document.querySelector('.captcha-switch i');
+        switchBtn.classList.remove('spin-anim');
+        void switchBtn.offsetWidth; // 触发重排
+        switchBtn.classList.add('spin-anim');
+
+        // 显示提示
+        const typeNames = {
+            'line': '线段干扰',
+            'circle': '圆圈干扰',
+            'shear': '扭曲干扰',
+            'gif': 'GIF动图',
+            'galgame': 'GalGame验证',
+            'jigsaw': '滑动拼图',
+            'textclick': '文字点选'
+        };
+        const name = typeNames[captchaTypes[currentCaptchaIndex]];
+        showMsg('已切换验证方式：' + name, 'success');
+    }
+
+    function guestLogin() {
+        window.location.href = 'index.html';
+    }
+
+    // 验证规则正则
+    const validateRegex = /^(?=.*\S)(?!\d+$)(?!.*\s)(?!^-)[^.\s-]+$/;
+
+    // 登录逻辑
+    async function doLogin() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const type = captchaTypes[currentCaptchaIndex];
+
+        if(!username || !password) return showMsg('请输入用户名和密码', 'error');
+
+        if (type === 'galgame') {
+            openGalModal();
+            return;
+        }
+        if (type === 'jigsaw') {
+            openJigsawModal();
+            return;
+        }
+        if (type === 'textclick') {
+            openTextClickModal();
+            return;
+        }
+
+        const captcha = document.getElementById('login-captcha').value;
+        if(!captcha) return showMsg('请输入验证码', 'error');
+
+        submitLogin(username, password, captcha);
+    }
+
+    async function submitLogin(username, password, captcha) {
+        // 构造表单数据 (模拟 form-data)
+        const params = new URLSearchParams();
+        params.append('username', username);
+        params.append('password', password);
+        params.append('captcha', captcha);
+
+        try {
+            const res = await fetch(`${API_BASE}/login`, {
+                method: 'POST',
+                body: params
+            });
+            const result = await res.json(); 
+            
+            if(result.status === 'SUCCESS') {
+                showMsg(result.errorMessage || '登录成功！正在进入树洞...', 'success');
+                playTransitionAndRedirect();
+            } else {
+                showMsg(result.errorMessage || '登录失败', 'error');
+                if (captchaTypes[currentCaptchaIndex] !== 'galgame') {
+                    refreshCaptcha(); 
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            showMsg('请求失败，请检查后端服务', 'error');
+        }
+    }
+
+    async function openGalModal() {
+        const modal = document.getElementById('gal-modal');
+        const questionEl = document.getElementById('gal-question');
+        const container = document.getElementById('gal-images-container');
+        
+        container.innerHTML = '加载中...';
+        modal.classList.add('active');
+        
+        try {
+            const res = await fetch(`${API_BASE}/galgame/generate`);
+            if (!res.ok) throw new Error("Fetch failed");
+            
+            const data = await res.json();
+            
+            if (!data) {
+                 showMsg('无法获取GalGame验证码', 'error');
+                 closeGalModal();
+                 return;
+            }
+
+            questionEl.innerText = data.question;
+            container.innerHTML = '';
+            
+            data.images.forEach((imgUrl, index) => {
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.className = 'gal-img-item';
+                img.onclick = () => selectGalImage(index);
+                container.appendChild(img);
+            });
+            
+        } catch(e) {
+            console.error(e);
+            showMsg('加载验证码失败，请重试', 'error');
+            closeGalModal();
+        }
+    }
+    
+    function closeGalModal() {
+        document.getElementById('gal-modal').classList.remove('active');
+    }
+    
+    function selectGalImage(index) {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        
+        closeGalModal();
+        submitLogin(username, password, index);
+    }
+
+    // 转场动画与跳转
+    function playTransitionAndRedirect() {
+        // 1. 显示转场层
+        const layer = document.querySelector('.hole-transition-layer');
+        const tunnel = document.querySelector('.hole-tunnel');
+        
+        // 2. 登录框飞走/淡出
+        document.body.classList.add('zooming-in');
+        
+        // 3. 隧道放大与层显现
+        layer.style.opacity = '1';
+        setTimeout(() => {
+            tunnel.style.transform = 'scale(5)'; // 放大足够大以覆盖全屏
+        }, 50);
+
+        // 4. 跳转
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1200); // 1.2秒后跳转
+    }
+
+    // 生成落叶
+    function createLeaf() {
+        const leaf = document.createElement('div');
+        leaf.className = 'falling-leaf';
+        
+        // 随机大小、颜色、位置
+        const size = Math.random() * 20 + 10;
+        const startLeft = Math.random() * window.innerWidth;
+        const duration = Math.random() * 5 + 5; // 5-10s 下落时间
+        const delay = Math.random() * 5;
+        // 随机结束X偏移量
+        const endX = (Math.random() - 0.5) * 200 + 'px';
+        const endY = window.innerHeight + 50 + 'px'; // 确保落到屏幕底部
+        
+        leaf.style.width = size + 'px';
+        leaf.style.height = size + 'px';
+        // 调高不透明度：从 0.7 提高到 0.9
+        leaf.style.background = `rgba(${Math.floor(Math.random()*50 + 200)}, ${Math.floor(Math.random()*100 + 100)}, 0, 0.9)`;
+        leaf.style.borderRadius = '50% 0 50% 0';
+        leaf.style.left = startLeft + 'px';
+        leaf.style.setProperty('--end-x', endX);
+        leaf.style.setProperty('--end-y', endY);
+        
+        // 应用下落动画
+        leaf.style.animation = `fall ${duration}s linear forwards`;
+        
+        document.body.appendChild(leaf);
+
+        // 监听动画结束事件，1秒后移除
+        setTimeout(() => {
+            leaf.remove();
+        }, duration * 1000 + 1000); // 下落时间 + 1秒
+    }
+
+    // 持续生成落叶
+    setInterval(createLeaf, 300);
+
+    // 注册逻辑
+    async function doRegister() {
+        const username = document.getElementById('reg-username').value;
+        const nickname = document.getElementById('reg-nickname').value;
+        const password = document.getElementById('reg-password').value;
+
+        if(!username || !password || !nickname) return showMsg('所有字段都不能为空', 'error');
+
+        const params = new URLSearchParams();
+        params.append('username', username);
+        params.append('nickname', nickname);
+        params.append('password', password);
+
+        try {
+            // 注意这里用了你原本代码里的 /loginNew 还是新改的 /register ?
+            // 如果你还没改后端代码，这里可能要用 /loginNew，或者我帮你把后端也一起改了。
+            // 假设我们已经改成了 /register
+            const res = await fetch(`${API_BASE}/register`, { // 这里要确认后端路径
+                method: 'POST',
+                body: params
+            });
+            const result = await res.json(); // 后端现在返回 LoginAndResisterResult
+            
+            // 判断 result.status 是否为 'SUCCESS'
+            if(result.status === 'SUCCESS') {
+                showMsg(result.errorMessage || '注册成功！请登录', 'success');
+                setTimeout(showLogin, 1500);
+            } else {
+                // 显示后端返回的具体错误信息
+                showMsg(result.errorMessage || '注册失败', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showMsg('请求失败', 'error');
+        }
+    }
+
+    /* ================= Jigsaw Captcha Logic ================= */
+    const CAPTCHA_BASE = API_BASE.replace('/user', '/captcha');
+    let jigsawX = 0;
+
+    async function openJigsawModal() {
+        const modal = document.getElementById('jigsaw-modal');
+        modal.classList.add('active');
+        loadJigsaw();
+    }
+
+    function closeJigsawModal() {
+        document.getElementById('jigsaw-modal').classList.remove('active');
+    }
+
+    async function loadJigsaw() {
+        const bg = document.getElementById('jigsaw-bg');
+        const block = document.getElementById('jigsaw-block');
+        const slider = document.getElementById('jigsaw-slider');
+        const progress = document.getElementById('jigsaw-progress');
+        
+        // Reset position
+        slider.style.left = '0px';
+        block.style.left = '0px';
+        if(progress) progress.style.width = '0px';
+        jigsawX = 0;
+        
+        try {
+            const res = await fetch(`${CAPTCHA_BASE}/jigsaw`);
+            const data = await res.json();
+            
+            bg.src = data.backgroundImage;
+            block.src = data.blockImage;
+            block.style.top = data.y + 'px';
+            
+            initJigsawDrag();
+        } catch (e) {
+            console.error(e);
+            showMsg('加载验证码失败', 'error');
+        }
+    }
+
+    function initJigsawDrag() {
+        const slider = document.getElementById('jigsaw-slider');
+        const block = document.getElementById('jigsaw-block');
+        const track = document.getElementById('jigsaw-track');
+        const progress = document.getElementById('jigsaw-progress');
+        let isDragging = false;
+        let startX = 0;
+
+        slider.onmousedown = (e) => {
+            e.preventDefault(); // Prevent default selection/drag behavior
+            isDragging = true;
+            startX = e.clientX;
+        };
+
+        document.onmousemove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault(); // Smoother drag
+            let moveX = e.clientX - startX;
+            let maxMove = 300 - 50; // track width - slider width
+            
+            if (moveX < 0) moveX = 0;
+            if (moveX > maxMove) moveX = maxMove;
+            
+            slider.style.left = moveX + 'px';
+            block.style.left = moveX + 'px';
+            if(progress) progress.style.width = moveX + 'px';
+            jigsawX = moveX;
+        };
+
+        document.onmouseup = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            // Submit verification
+            closeJigsawModal();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            submitLogin(username, password, jigsawX);
+        };
+    }
+
+    /* ================= Text Click Captcha Logic ================= */
+    let textClickPoints = [];
+    let requiredWordsLength = 3;
+
+    async function openTextClickModal() {
+        const modal = document.getElementById('textclick-modal');
+        modal.classList.add('active');
+        refreshTextClick();
+    }
+
+    function closeTextClickModal() {
+        document.getElementById('textclick-modal').classList.remove('active');
+    }
+
+    async function refreshTextClick() {
+        textClickPoints = [];
+        const area = document.getElementById('textclick-area');
+        // Clear markers (keep img)
+        const img = document.getElementById('textclick-bg');
+        area.innerHTML = '';
+        area.appendChild(img);
+        
+        try {
+            const res = await fetch(`${CAPTCHA_BASE}/textclick`);
+            const data = await res.json();
+            
+            img.src = data.image;
+            document.getElementById('textclick-words').innerText = data.words.join('、');
+            
+            // Click handler
+            area.onclick = (e) => {
+                if (textClickPoints.length >= requiredWordsLength) return;
+                
+                const rect = area.getBoundingClientRect();
+                const x = Math.round(e.clientX - rect.left);
+                const y = Math.round(e.clientY - rect.top);
+                
+                textClickPoints.push({x, y});
+                
+                // Add marker
+                const marker = document.createElement('div');
+                marker.style.position = 'absolute';
+                marker.style.left = (x - 10) + 'px';
+                marker.style.top = (y - 10) + 'px';
+                marker.style.width = '20px';
+                marker.style.height = '20px';
+                marker.style.background = '#1890ff';
+                marker.style.borderRadius = '50%';
+                marker.style.color = '#fff';
+                marker.style.textAlign = 'center';
+                marker.style.lineHeight = '20px';
+                marker.innerText = textClickPoints.length;
+                marker.style.pointerEvents = 'none';
+                area.appendChild(marker);
+                
+                if (textClickPoints.length === requiredWordsLength) {
+                    setTimeout(() => {
+                        closeTextClickModal();
+                        const username = document.getElementById('login-username').value;
+                        const password = document.getElementById('login-password').value;
+                        // Format: x1,y1;x2,y2;x3,y3
+                        const captchaVal = textClickPoints.map(p => `${p.x},${p.y}`).join(';');
+                        submitLogin(username, password, captchaVal);
+                    }, 500);
+                }
+            };
+            
+        } catch (e) {
+            console.error(e);
+            showMsg('加载验证码失败', 'error');
+        }
+    }
+
+    function resetTextClick() {
+        textClickPoints = [];
+        const area = document.getElementById('textclick-area');
+        const img = document.getElementById('textclick-bg');
+        // Remove all markers
+        const markers = area.querySelectorAll('div');
+        markers.forEach(m => m.remove());
+    }
+
+</script>
+</body>
+</html>

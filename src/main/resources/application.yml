@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: tree-hole
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/tree_hole?characterEncoding=utf8&useSSL=false
+    username: root
+    password: "123456789" # 注意密码如果是纯数字要加单引号或者是双引号
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+mybatis:
+ configuration:
+  map-underscore-to-camel-case: true
+ mapper-locations: classpath:Mapper/**Mapper.xml # 配置 mybatis xml 的⽂件路径，在 resources/Mapper 创建所有表的 xml ⽂件

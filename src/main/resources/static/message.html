@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>私信 - 树洞</title>
+    <link rel="stylesheet" href="/css/style.css?v=26">
+    <link href="https://cdn.bootcdn.net/ajax/libs/remixicon/4.1.0/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar animate-slide-down">
+        <div class="logo">
+            <i class="ri-tree-line" style="font-size: 24px; color: var(--primary-color);"></i>
+            <span>树洞密语</span>
+        </div>
+        <div class="user-info">
+            <a href="index.html" class="btn-link"><i class="ri-arrow-left-line"></i> 返回树洞</a>
+        </div>
+    </nav>
+
+    <div class="main-container animate-fade-in" style="max-width: 1000px;">
+        <div class="message-container glass-effect">
+            <!-- 左侧列表 -->
+            <div class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    最近联系
+                </div>
+                <div class="chat-user-list" id="conversation-list">
+                    <div class="empty-tip" style="padding: 20px; text-align: center; color: #999;">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 右侧聊天 -->
+            <div class="chat-main" style="position: relative;">
+                <div class="chat-header" id="chat-header" style="z-index: 2; position: relative; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);">
+                    <span>请选择联系人</span>
+                </div>
+                
+                <!-- 背景设置弹窗 -->
+                <div id="bg-settings-popover" class="picker-popover" style="width: 260px; bottom: auto; top: 60px; right: 20px; left: auto; z-index: 100; flex-direction: column;">
+                    <div style="margin-bottom: 10px; font-weight: bold; color: var(--text-color);">聊天背景设置</div>
+                    <button onclick="randomChatBg()" style="width: 100%; padding: 8px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; margin-bottom: 10px;">
+                        <i class="ri-shuffle-line"></i> 随机切换背景
+                    </button>
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--text-sub); font-size: 13px;">
+                        <span>透明度</span>
+                        <input type="range" min="0" max="100" value="10" oninput="changeBgOpacity(this.value)" style="flex: 1;">
+                        <span id="bg-opacity-val">10%</span>
+                    </div>
+                </div>
+
+                <!-- 消息列表容器 (包含背景图) -->
+                <div style="position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                    <div id="chat-custom-bg" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none; background-size: cover; background-position: center; opacity: 0.1;"></div>
+                    
+                    <div class="chat-messages" id="message-list" style="z-index: 1; position: relative;">
+                        <div class="empty-tip" style="margin-top: 50px; text-align: center; color: #999;">
+                            <i class="ri-message-3-line" style="font-size: 48px; margin-bottom: 10px; display: block;"></i>
+                            选择一个好友开始聊天吧
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area" id="input-area" style="display: none; z-index: 2; position: relative; background: var(--card-bg);">
+                    <div class="chat-tools">
+                        <i class="ri-emotion-line tool-btn" title="Emoji" onclick="toggleEmojiPicker(event)"></i>
+                        <i class="ri-text-spacing tool-btn" title="颜文字" onclick="toggleKaomojiPicker(event)"></i>
+                    </div>
+                    
+                    <div id="emoji-picker" class="picker-popover"></div>
+                    <div id="kaomoji-picker" class="picker-popover"></div>
+
+                    <div class="chat-input-box">
+                        <textarea id="chat-input" class="chat-textarea" placeholder="输入消息..."></textarea>
+                        <button class="chat-send-btn" onclick="sendMsg()">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看用户树洞弹窗 -->
+    <div id="target-user-holes-modal" class="modal-overlay" onclick="if(event.target === this) closeTargetUserHoles()">
+        <div class="modal-content glass-effect" style="width: 500px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3 id="target-user-holes-title">TA的树洞</h3>
+                <span class="close-btn" onclick="closeTargetUserHoles()">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div id="target-user-holes-list" class="my-holes-list" style="padding: 20px;">
+                    <!-- 动态加载内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/message.js?v=2"></script>
+</body>
+</html>

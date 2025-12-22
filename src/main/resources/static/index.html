@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>树洞 - 倾诉你的心声</title>
+    <link rel="stylesheet" href="/css/style.css?v=26">
+    <!-- 引入 Remix Icon (更换为国内 BootCDN 源) -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/remixicon/4.1.0/remixicon.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar animate-slide-down">
+        <div class="logo">
+            <i class="ri-tree-line" style="font-size: 24px; color: var(--primary-color);"></i>
+            <span>树洞</span>
+        </div>
+        
+        <div class="nav-right" style="display: flex; align-items: center; gap: 15px;">
+            <!-- 通知铃铛 (移动到这里) -->
+            <div class="nav-icon-btn" onclick="showNotificationModal()" title="点赞通知">
+                <i class="ri-notification-3-line"></i>
+            </div>
+
+            <!-- 树洞切换 (分类筛选) -->
+            <select id="hole-category" class="nav-select" onchange="onCategoryChange()">
+                <option value="all">🌲 全部</option>
+                <option value="day">☀️ 白日</option>
+                <option value="night">🌙 黑夜</option>
+                <option value="happy">😄 开心</option>
+                <option value="unhappy">😞 不开心</option>
+            </select>
+
+            <!-- 发布按钮 (笔图标) -->
+            <div class="nav-icon-btn" onclick="showPublishModal()" title="发布树洞">
+                <i class="ri-edit-2-line"></i>
+            </div>
+
+            <div class="user-info" id="user-status">
+                <!-- 登录状态将在这里动态渲染 -->
+                <span>想看更多？</span>
+                <a href="login.html" class="btn-link">去登录/注册</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container animate-fade-in">
+        <!-- 列表区域 -->
+        <div id="feed-container">
+            <!-- 动态加载内容 -->
+        </div>
+        
+        <!-- 加载更多按钮 -->
+        <div class="load-more-container">
+            <button id="load-more-btn" class="btn-load-more" onclick="loadHoles(false)" style="display: none;">加载更多</button>
+        </div>
+    </div>
+    
+    <!-- 通知列表弹窗 -->
+    <div id="notification-modal" class="modal-overlay" onclick="if(event.target === this) closeNotificationModal()">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h3>收到的赞</h3>
+                <span class="close-btn" onclick="closeNotificationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="notification-list" class="notification-list">
+                    <!-- 动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户中心弹窗 -->
+    <div id="user-center-modal" class="modal-overlay" onclick="if(event.target === this) closeUserCenter()">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h3>个人中心</h3>
+                <span class="close-btn" onclick="closeUserCenter()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="uc-info-section">
+                    <div class="uc-avatar-wrapper" onclick="document.getElementById('avatar-input').click()">
+                        <img id="uc-avatar-img" src="" alt="头像">
+                        <div id="uc-avatar-default" class="avatar-default"><i class="ri-user-line"></i></div>
+                        <div class="avatar-edit-hint"><i class="ri-camera-line"></i></div>
+                        <input type="file" id="avatar-input" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
+                    </div>
+                    <div class="uc-text-info">
+                        <div class="uc-username" id="uc-username">@username</div>
+                        <input type="text" id="uc-nickname-input" class="uc-input" placeholder="设置昵称">
+                    </div>
+                </div>
+                
+                <div class="uc-actions">
+                    <button class="btn-primary" onclick="saveUserInfo()">保存修改</button>
+                    <button class="btn-outline" onclick="toggleChangePassword()">修改密码</button>
+                    <button class="btn-danger" onclick="logout()">退出登录</button>
+                </div>
+                
+                <!-- 修改密码区域 -->
+                <div id="password-change-area" class="password-area" style="display: none;">
+                    <input type="password" id="old-password" class="uc-input" placeholder="旧密码">
+                    <input type="password" id="new-password" class="uc-input" placeholder="新密码 (6-20位)">
+                    <button class="btn-primary" onclick="submitChangePassword()" style="margin-top: 10px; width: 100%;">确认修改</button>
+                </div>
+
+                <div class="uc-divider"></div>
+                
+                <div class="uc-my-holes">
+                    <h4>我的发布</h4>
+                    <div id="my-holes-list" class="my-holes-list">
+                        <!-- 我的树洞列表 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户卡片弹窗挂载点 -->
+    <div id="user-card-overlay" class="user-card-overlay" onclick="closeUserCard()"></div>
+    <div id="user-card-popup" class="user-card-popup">
+        <!-- 内容动态生成 -->
+    </div>
+
+    <!-- 发布树洞弹窗 -->
+    <div id="publish-modal" class="modal-overlay" onclick="if(event.target === this) closePublishModal()">
+        <div class="modal-content glass-effect" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>发布树洞</h3>
+                <span class="close-btn" onclick="closePublishModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <textarea id="hole-content" class="publish-textarea" placeholder="这里是树洞，在这里写下你的心事..."></textarea>
+                <div class="publish-tools" style="margin-top: 20px;">
+                    <select id="publish-category" class="category-select">
+                        <option value="day">☀️ 白日树洞</option>
+                        <option value="night">🌙 黑夜树洞</option>
+                        <option value="happy">😄 开心树洞</option>
+                        <option value="unhappy">😞 不开心树洞</option>
+                    </select>
+                    <button class="btn-submit" onclick="publishHole()">发布</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看用户树洞弹窗 (通知点击头像后) -->
+    <div id="target-user-holes-modal" class="modal-overlay" onclick="if(event.target === this) closeTargetUserHoles()">
+        <div class="modal-content glass-effect" style="width: 500px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3 id="target-user-holes-title">TA的树洞</h3>
+                <span class="close-btn" onclick="closeTargetUserHoles()">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div id="target-user-holes-list" class="my-holes-list" style="padding: 20px;">
+                    <!-- 动态加载内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/script.js?v=25"></script>
+</body>
+</html>
