@@ -23,4 +23,5 @@ public class Hole {
     private String userNickname;
     private String userAvatar;
     private Boolean isLiked; // 当前用户是否已点赞
+    private Boolean isFavorited; // 当前用户是否已收藏
 }

@@ -32,8 +32,8 @@ public class CaptchaUtil {
 
     /**
      * 生成滑动拼图验证码
-     * @param imagePath relative path in classpath (e.g. static/chatPicture/1.jpg)
-     * @return Map containing: backgroundImage (base64), blockImage (base64), x (int), y (int)
+     * @param imagePath 类路径下的相对路径 (例如 static/chatPicture/1.jpg)
+     * @return 包含: backgroundImage (base64), blockImage (base64), x (int), y (int) 的 Map
      */
     public static Map<String, Object> createJigsawCaptcha(String imagePath) throws IOException {
         // 加载并调整图片大小
@@ -97,8 +97,8 @@ public class CaptchaUtil {
 
     /**
      * 生成文字点选验证码
-     * @param imagePath relative path
-     * @return Map containing: image (base64), words (List<String>), verifyWords (List<Point>)
+     * @param imagePath 相对路径
+     * @return 包含: image (base64), words (List<String>), verifyWords (List<Point>) 的 Map
      */
     public static Map<String, Object> createTextClickCaptcha(String imagePath) throws IOException {
         BufferedImage originalImage = ImageIO.read(new ClassPathResource(imagePath).getInputStream());

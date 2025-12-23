@@ -21,7 +21,11 @@ public enum loginAndResisterStatus {
     ILLEGAL_CHARACTER(-11),//非法字符
     SEND_MESSAGE_MYSELF(-12),//自己给自己发私信
     TEXT_OVER(-13),//内容过长
-    TEXT_INSUFFICIENT(-14);//内容过短
+    TEXT_INSUFFICIENT(-14),//内容过短
+    TIME_CAPSULE(-15),//时间胶囊埋藏失败
+    FOLLOW_MYSELF(-16),//不能关注自己
+    NOT_FOLLOWED(-17),//未关注该用户
+    FOLLOW_OP_FAILED(-18);//关注操作失败
 
     private Integer code;
 

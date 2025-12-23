@@ -101,6 +101,17 @@ public class HoleController {
         return holeService.queryByUserId(userId, userId);
     }
 
+    // 获取点赞前10的树洞
+    @RequestMapping("/top10")
+    public List<Hole> top10(HttpSession session){
+        // 获取当前用户ID (查看者)
+        Long viewerId = (Long)session.getAttribute(Constant.USER_ID);
+        // 如果未登录，viewerId设为0
+        if(viewerId == null) viewerId = 0L;
+        
+        return holeService.getTop10Liked(viewerId);
+    }
+
     // 查看指定用户的树洞 (用于私信界面点击头像查看)
     @RequestMapping("/userHole")
     public List<Hole> userHole(Long targetUserId, HttpSession session){

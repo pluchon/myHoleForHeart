@@ -43,7 +43,8 @@ public interface HoleMapper {
 
     //根据用户Id查询树洞内容，并包含当前查看用户的点赞状态
     @Select("select h.*, u.nickname as userNickname, u.avatar as userAvatar, " +
-            "(select count(*) from hole_like hl where hl.hole_id = h.id and hl.user_id = #{viewerId}) > 0 as isLiked " +
+            "(select count(*) from hole_like hl where hl.hole_id = h.id and hl.user_id = #{viewerId}) > 0 as isLiked, " +
+            "(select count(*) from favorite f where f.hole_id = h.id and f.user_id = #{viewerId}) > 0 as isFavorited " +
             "from hole h left join `user` u on h.user_id = u.id " +
             "where h.user_id = #{userId} order by h.id desc")
     List<Hole> queryByUserId(@Param("userId") Long userId, @Param("viewerId") Long viewerId);
@@ -55,6 +56,14 @@ public interface HoleMapper {
     //登录用户删除自己的树洞
     @Delete("delete from hole where id = #{id} and user_id = #{userId}")
     Integer deleteByIdAndUserId(long id,Long userId);
+
+    // 查询点赞前10的树洞
+    @Select("select h.*, u.nickname as userNickname, u.avatar as userAvatar, " +
+            "(select count(*) from hole_like hl where hl.hole_id = h.id and hl.user_id = #{viewerId}) > 0 as isLiked, " +
+            "(select count(*) from favorite f where f.hole_id = h.id and f.user_id = #{viewerId}) > 0 as isFavorited " +
+            "from hole h left join `user` u on h.user_id = u.id " +
+            "order by h.like_count desc limit 10")
+    List<Hole> queryTop10Liked(@Param("viewerId") Long viewerId);
 
     // 查询给我点赞的消息：查询所有点赞了我的树洞的用户（排除自己给自己点赞的情况）
     @Select("select u.id as userId, u.nickname, u.avatar, h.content as holeContent " +

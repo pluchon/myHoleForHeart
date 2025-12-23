@@ -68,6 +68,11 @@ public class HoleService {
         return holeMapper.deleteByIdAndUserId(id,userId) > 0;
     }
 
+    // 获取点赞前10的树洞
+    public List<Hole> getTop10Liked(Long viewerId) {
+        return holeMapper.queryTop10Liked(viewerId);
+    }
+
     //获取点赞的消息列表
     public List<LikeMessage> getLikeMessage(Long userId){
         return holeMapper.selectLikeMessage(userId);

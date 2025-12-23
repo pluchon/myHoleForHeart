@@ -101,6 +101,30 @@ public class LoginAndResisterResult<T> {
         return result;
     }
 
+    //不能关注自己
+    public static LoginAndResisterResult followMyself(){
+        LoginAndResisterResult result = new LoginAndResisterResult();
+        result.setStatus(loginAndResisterStatus.FOLLOW_MYSELF);
+        result.setErrorMessage("不能关注自己");
+        return result;
+    }
+
+    //未关注该用户
+    public static LoginAndResisterResult notFollowed(){
+        LoginAndResisterResult result = new LoginAndResisterResult();
+        result.setStatus(loginAndResisterStatus.NOT_FOLLOWED);
+        result.setErrorMessage("未关注该用户");
+        return result;
+    }
+
+    //关注操作失败
+    public static LoginAndResisterResult followOpFailed(String msg){
+        LoginAndResisterResult result = new LoginAndResisterResult();
+        result.setStatus(loginAndResisterStatus.FOLLOW_OP_FAILED);
+        result.setErrorMessage(msg != null ? msg : "关注操作失败");
+        return result;
+    }
+
     //非法字符
     public static LoginAndResisterResult illegalCharacter(){
         LoginAndResisterResult result = new LoginAndResisterResult();
@@ -130,6 +154,14 @@ public class LoginAndResisterResult<T> {
         LoginAndResisterResult result = new LoginAndResisterResult();
         result.setStatus(loginAndResisterStatus.TEXT_INSUFFICIENT);
         result.setErrorMessage("你写这么少东西好意思发吗？");
+        return result;
+    }
+
+    //时空胶囊埋藏失败
+    public static LoginAndResisterResult timeCapsuleError(){
+        LoginAndResisterResult result = new LoginAndResisterResult();
+        result.setStatus(loginAndResisterStatus.TIME_CAPSULE);
+        result.setErrorMessage("埋藏失败，请检查时间或网络连接状态");
         return result;
     }
 }

@@ -1,5 +1,9 @@
 @charset "UTF-8";
 
+* {
+    box-sizing: border-box;
+}
+
 :root {
     --primary-color: #52c41a;
     --hover-color: #73d13d;
@@ -32,7 +36,7 @@ body {
     margin: 0;
     padding: 0;
     transition: background-color 0.3s, color 0.3s;
-    background-image: var(--bg-image, url('/picture/defaultForest.jpg'));
+    background-image: var(--bg-image, url('/picture/newForest.png'));
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
@@ -45,6 +49,173 @@ body::before {
     filter: blur(2px);
     z-index: -1;
     transform: scale(1.05); /* 稍微放大防止白边 */
+}
+body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.15); /* 淡淡的白色遮罩 */
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* 时空胶囊样式 */
+.capsule-tabs {
+    display: flex;
+    margin-bottom: 20px;
+    background: rgba(0,0,0,0.03);
+    padding: 4px;
+    border-radius: 12px;
+}
+.capsule-tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-sub);
+    border-radius: 10px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid transparent; /* 防止抖动 */
+}
+.capsule-tab.active {
+    color: var(--primary-color);
+    background: var(--card-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    font-weight: 600;
+    border-color: rgba(0,0,0,0.05);
+}
+.letter-paper {
+    background: #fdfbf7;
+    border: 1px solid #e8e8e8;
+    padding: 0; /* padding 改为0，由 textarea 自身 padding 控制 */
+    border-radius: 12px;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+    background-image: linear-gradient(#e8e8e8 1px, transparent 1px);
+    background-size: 100% 32px; /* 增大行高 */
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.letter-textarea {
+    width: 100%;
+    height: 192px; /* 32px * 6 lines */
+    border: none;
+    background: transparent;
+    resize: none;
+    outline: none;
+    font-size: 16px;
+    line-height: 32px; /* 匹配背景行高 */
+    color: #555;
+    font-family: inherit;
+    padding: 0 15px; /* 左右 padding */
+    margin-top: 1px; /* Align with grid lines */
+    box-sizing: border-box;
+    display: block;
+}
+.capsule-settings {
+    margin-top: 15px;
+}
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.02);
+    padding: 12px 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.setting-item i {
+    color: var(--text-sub);
+    font-size: 18px;
+}
+.setting-item label {
+    font-size: 14px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+.capsule-input {
+    flex: 1;
+    padding: 5px;
+    border: none;
+    background: transparent;
+    outline: none;
+    color: var(--text-sub);
+    font-family: inherit;
+    text-align: right;
+    font-size: 14px;
+}
+.capsule-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.capsule-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s;
+}
+.capsule-item.locked {
+    opacity: 0.8;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.02),
+        rgba(0,0,0,0.02) 10px,
+        rgba(0,0,0,0.05) 10px,
+        rgba(0,0,0,0.05) 20px
+    );
+}
+.capsule-item.unlocked {
+    border-color: var(--primary-color);
+    background: rgba(82, 196, 26, 0.05);
+}
+.capsule-icon {
+    font-size: 24px;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+}
+.capsule-item.unlocked .capsule-icon {
+    color: var(--primary-color);
+    background: rgba(82, 196, 26, 0.1);
+}
+.capsule-info {
+    flex: 1;
+}
+.capsule-content {
+    font-size: 15px;
+    margin-bottom: 5px;
+    line-height: 1.5;
+    color: var(--text-color);
+}
+.capsule-meta {
+    font-size: 12px;
+    color: var(--text-sub);
+}
+
+/* 纸飞机动画元素 */
+.paper-airplane {
+    position: fixed;
+    z-index: 9999;
+    color: var(--primary-color);
+    font-size: 24px;
+    pointer-events: none;
+    display: none;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
 
 /* 侧边铃铛样式 - 已移除 */
@@ -124,15 +295,436 @@ body::before {
     background: var(--card-bg);
 }
 
-/* 主体布局 */
+/* 主体布局 - 新版 Dashboard 结构 */
 .main-container { 
-    max-width: 900px; 
+    max-width: 1400px; 
     margin: 30px auto; 
     padding: 0 20px; 
     position: relative;
+    display: flex;
+    flex-direction: column; /* 垂直排列：Dashboard在上，Feed在下 */
+    gap: 30px;
 }
 
-/* 发布框卡片 (旧样式保留，虽然已移除DOM，防止JS报错或未来复用) */
+/* --- Dashboard Group (轮播图 + Top 10) --- */
+.dashboard-group {
+    display: flex;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.85); /* 半透明蒙版背景 */
+    backdrop-filter: blur(10px); /* 毛玻璃效果 */
+    border: 3px solid #76d275; /* 绿色描边 */
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.carousel-section {
+    flex: 2; /* 轮播图占宽一些 */
+    min-width: 0;
+}
+
+.top10-section {
+    flex: 1; /* Top 10 占窄一些 */
+    min-width: 320px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 轮播图容器 */
+.carousel-container {
+    width: 100%;
+    height: 100%; /* 撑满父容器高度 */
+    min-height: 400px; /* 保证最小高度 */
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 关键：保证图片铺满且不变形 */
+}
+
+/* Top 10 内部包装器 */
+.top-10-wrapper {
+    height: 100%;
+    min-height: 400px; /* 与轮播图对齐 */
+    max-height: 500px; /* 限制最大高度，内部滚动 */
+    overflow-y: auto; /* 允许内部滚动 */
+    background: transparent;
+    padding-right: 5px; /* 滚动条留白 */
+}
+
+/* 自定义滚动条样式 */
+.top-10-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+.top-10-wrapper::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+.top-10-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.top10-header {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 居中对齐 */
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.95);
+    z-index: 10;
+    padding: 10px 0;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+/* 轮播图徽章 (覆盖水印) */
+.carousel-badge {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Feed 区域 */
+.feed-section {
+    width: 100%;
+    max-width: 900px; /* 限制树洞列表宽度，防止太宽难阅读 */
+    margin: 0 auto; /* 居中 */
+}
+
+/* 响应式调整 */
+@media (max-width: 1000px) {
+    .dashboard-group {
+        flex-direction: column;
+    }
+    .top10-section {
+        max-width: 100%;
+        min-height: auto;
+    }
+    .carousel-container {
+        min-height: 250px;
+    }
+}
+
+.carousel-wrapper {
+    display: flex;
+    transition: transform 0.5s ease;
+    height: 100%;
+}
+
+.carousel-slide {
+    min-width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.carousel-dots {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.carousel-dot.active {
+    background: #fff;
+    transform: scale(1.2);
+}
+
+/* 侧边栏卡片 */
+.sidebar-card {
+    background: var(--card-bg);
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+}
+.sidebar-card h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* Top 10 列表 (GitCode 风格) */
+.top-10-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.t10-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.t10-card:hover {
+    border-color: #b3b3b3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.t10-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+/* Badge: "精选推荐" */
+.t10-badge {
+    background: #fff7e6; /* Light Orange */
+    color: #fa8c16; /* Orange */
+    border: 1px solid #ffd591;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-weight: 500;
+}
+
+.t10-badge.simple {
+    background: #f0f2f5;
+    color: #999;
+    border: 1px solid #d9d9d9;
+}
+
+.t10-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0; /* for truncation if needed */
+}
+
+.t10-username {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.verified-icon {
+    color: #f6ca9d; /* Gold */
+    font-size: 14px;
+}
+
+/* Star Button */
+.t10-star-btn {
+    background: #f5f5f5;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.t10-star-btn:hover {
+    background: #e6e6e6;
+    border-color: #bfbfbf;
+}
+
+.t10-star-btn.active {
+    background: #fff1f0;
+    border-color: #ffa39e;
+    color: #cf1322;
+}
+
+.t10-content {
+    font-size: 13px;
+    color: #586069; /* GitHub gray */
+    margin-bottom: 8px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.t10-footer {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #586069;
+}
+
+.t10-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+}
+
+.t10-cat {
+    font-weight: 500;
+    color: #24292e;
+}
+
+.t10-sep {
+    margin: 0 6px;
+    color: #d1d5da;
+}
+
+.t10-time {
+    color: #586069;
+}
+
+/* GitCode 风格卡片 (覆盖旧样式) */
+.hole-card { 
+    background: var(--card-bg); 
+    padding: 16px; 
+    border-radius: 6px; 
+    margin-bottom: 15px; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
+    animation: fadeIn 0.5s ease-out;
+    transition: all 0.2s;
+    border: 1px solid var(--border-color);
+}
+.hole-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+    border-color: #ccc;
+}
+.hole-header {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.user-avatar { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    background: #f0f2f5; 
+    font-size: 16px; 
+    color: #999; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.user-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.user-meta { 
+    display: flex; 
+    flex-direction: column; 
+}
+.username {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0366d6; /* GitHub/GitCode 链接色 */
+}
+.post-time {
+    font-size: 12px;
+    color: var(--text-sub);
+}
+.category-tag { 
+    background: rgba(0,0,0,0.05); 
+    padding: 1px 6px; 
+    border-radius: 4px; 
+    margin-left: 5px; 
+    font-size: 11px;
+}
+.hole-body {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    color: #24292e;
+    white-space: pre-wrap; 
+    word-break: break-all;
+}
+.hole-footer {
+    padding-top: 12px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    gap: 20px;
+}
+.action-btn {
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    color: var(--text-sub); 
+    cursor: pointer; 
+    transition: all 0.2s;
+}
+.action-btn:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--primary-color);
+}
+.action-btn.liked { color: #ff7675; }
+
+/* 发布框卡片 */
 .publish-card { 
     background: var(--card-bg); 
     padding: 24px; 
@@ -189,24 +781,6 @@ body::before {
     transition: all 0.3s;
 }
 .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(82, 196, 26, 0.4); }
-
-/* 列表区域 */
-.hole-card { 
-    background: var(--card-bg); 
-    padding: 24px; 
-    border-radius: var(--card-radius); 
-    margin-bottom: 20px; 
-    box-shadow: var(--card-shadow); 
-    animation: fadeIn 0.5s ease-out;
-    transition: all 0.3s;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.5);
-    border-left: 5px solid transparent; /* 预留给主题色 */
-}
-.hole-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-}
 
 /* 动画类 */
 .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -267,21 +841,17 @@ body::before {
 .like-btn { cursor: pointer; display: flex; align-items: center; gap: 3px; }
 .like-btn.liked { color: #ff7675; }
 
-/* 树洞卡片头部 */
-.hole-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
-.user-avatar { width: 40px; height: 40px; border-radius: 50%; background: #f0f2f5; font-size: 20px; color: #999; }
-.user-avatar-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-.user-meta { display: flex; flex-direction: column; }
-.username { font-weight: 600; font-size: 15px; }
-.post-time { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
-.category-tag { background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
-
-/* 树洞内容 */
-.hole-body { font-size: 16px; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap; word-break: break-all; }
-.hole-footer { display: flex; gap: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
-.action-btn { display: flex; align-items: center; gap: 6px; color: var(--text-sub); cursor: pointer; transition: color 0.3s; }
-.action-btn:hover { color: var(--primary-color); }
-.action-btn.liked { color: #ff7675; }
+/* 粒子特效 */
+.particle {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: #ff7675;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+}
 
 /* 弹窗样式 */
 .modal-overlay {
@@ -322,6 +892,37 @@ body::before {
 }
 
 /* 通知列表样式 */
+.notif-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.03);
+    padding: 4px;
+    border-radius: 12px;
+}
+.notif-tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-sub);
+    border-radius: 10px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid transparent;
+}
+.notif-tab.active {
+    color: var(--primary-color);
+    background: var(--card-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    font-weight: 600;
+    border-color: rgba(0,0,0,0.05);
+}
+
 .notification-list {
     overflow-y: auto;
     max-height: 400px;
@@ -997,4 +1598,529 @@ body::before {
 .dm-send-btn:hover {
     opacity: 0.9;
     transform: translateY(-1px);
+}
+
+/* --- Feed Layout (Two Columns) --- */
+.feed-layout-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    width: 100%;
+    /* max-width: 1200px;  Remove max-width to align with dashboard */
+    margin: 0 auto;
+}
+
+.feed-main-column {
+    flex: 1;
+    min-width: 0; /* 防止内容撑开 flex item */
+}
+
+#feed-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px; /* Increased gap */
+    padding-bottom: 24px;
+    align-items: start;
+}
+
+.feed-sidebar-column {
+    width: 280px; /* 侧边预留区域宽度 */
+    flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+    .feed-sidebar-column {
+        display: none; /* 移动端隐藏侧边栏 */
+    }
+    #feed-container {
+        grid-template-columns: 1fr; /* Mobile: 1 column */
+    }
+}
+
+/* --- GitCode Style Card --- */
+.gitcode-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px; /* Explicit margin to ensure vertical spacing */
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    height: auto; /* Changed from 100% to auto to prevent sync expansion */
+}
+
+.gitcode-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    border-color: #b3b3b3;
+    transform: translateY(-2px);
+}
+
+.gitcode-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gitcode-user-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.gitcode-avatar-box {
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+}
+
+.gitcode-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px; /* 方形圆角 */
+    object-fit: cover;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.gitcode-meta {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.3;
+}
+
+.gitcode-username {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0969da; /* GitHub Blue */
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.gitcode-username:hover {
+    text-decoration: underline;
+}
+
+.gitcode-time-ago {
+    font-size: 12px;
+    color: var(--text-sub);
+}
+
+.gitcode-star-btn, .gitcode-like-btn, .gitcode-fav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(27, 31, 36, 0.15);
+    background: #f6f8fa;
+    color: #24292f;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 28px;
+    box-shadow: 0 1px 0 rgba(27, 31, 36, 0.04);
+}
+
+.gitcode-star-btn:hover, .gitcode-like-btn:hover, .gitcode-fav-btn:hover {
+    background-color: #f3f4f6;
+    border-color: rgba(27, 31, 36, 0.15);
+}
+
+.gitcode-fav-btn.favorited {
+    background: #fff8c5;
+    border-color: rgba(27,31,36,0.15);
+    color: #9a6700;
+}
+
+.gitcode-star-btn.liked {
+    color: #e11d48;
+    background: #fff1f2;
+    border-color: #fda4af;
+}
+
+.gitcode-like-btn.liked {
+    background: #fff1f0;
+    border-color: #ffa39e;
+    color: #cf1322;
+}
+
+/* User Center Tabs */
+.uc-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.uc-tab {
+    padding: 8px 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #64748b;
+    transition: all 0.2s;
+}
+.uc-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+.uc-tab:hover {
+    color: var(--primary-color);
+}
+
+.star-icon-wrapper {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.gitcode-body {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #24292f;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    transition: max-height 0.3s ease;
+}
+
+[data-theme="dark"] .gitcode-body {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .gitcode-username {
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .gitcode-stats {
+    color: #8b949e;
+}
+
+[data-theme="dark"] .gitcode-card {
+    background-color: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .gitcode-star-btn, 
+[data-theme="dark"] .gitcode-like-btn, 
+[data-theme="dark"] .gitcode-fav-btn {
+    background-color: #21262d;
+    border-color: rgba(240, 246, 252, 0.1);
+    color: #c9d1d9;
+}
+
+[data-theme="dark"] .gitcode-star-btn:hover, 
+[data-theme="dark"] .gitcode-like-btn:hover, 
+[data-theme="dark"] .gitcode-fav-btn:hover {
+    background-color: #30363d;
+    border-color: #8b949e;
+}
+
+/* Specific Dark Themes for Night/Unhappy */
+[data-theme="dark"] .gitcode-card.theme-night {
+    background: linear-gradient(135deg, #161b22, #010409);
+    border-color: #1f6feb;
+}
+
+[data-theme="dark"] .gitcode-card.theme-unhappy {
+    background: linear-gradient(135deg, #21262d, #161b22);
+    border-color: #6e7681;
+}
+
+
+/* Dark Theme for Top 10 */
+[data-theme="dark"] .top10-header {
+    background: rgba(13, 17, 23, 0.95);
+    color: #e6edf3;
+    border-bottom-color: #30363d;
+}
+
+[data-theme="dark"] .t10-card {
+    background-color: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .t10-content {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .t10-cat {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .t10-time, 
+[data-theme="dark"] .t10-footer {
+    color: #8b949e;
+}
+
+[data-theme="dark"] .t10-username {
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .t10-card.theme-night {
+    background: linear-gradient(135deg, #161b22, #010409);
+    border-color: #1f6feb;
+}
+
+[data-theme="dark"] .t10-card.theme-unhappy {
+    background: linear-gradient(135deg, #21262d, #161b22);
+    border-color: #6e7681;
+}
+
+/* Follow System Styles */
+.follow-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.follow-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.follow-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transform: translateY(-1px);
+}
+
+.follow-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.follow-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.follow-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.follow-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-main);
+}
+
+.follow-special-badge {
+    font-size: 11px;
+    color: #f59f00;
+    background: #fff9db;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.follow-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-follow, .btn-special {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-follow {
+    background: #0969da;
+    color: white;
+}
+
+.btn-follow:hover {
+    background: #0860ca;
+}
+
+.btn-follow.following {
+    background: #f6f8fa;
+    color: #24292f;
+    border: 1px solid rgba(27, 31, 36, 0.15);
+}
+
+.btn-follow.following:hover {
+    background: #f3f4f6;
+    border-color: #d0d7de;
+    color: #cf222e; /* Red on hover to indicate unfollow */
+}
+
+/* User Card Follow Button specific */
+.uc-follow-btn {
+    padding: 6px 16px;
+    border-radius: 20px; /* Pill shape */
+    font-weight: 600;
+}
+
+.btn-special {
+    background: #f6f8fa;
+    color: #57606a;
+    border: 1px solid rgba(27, 31, 36, 0.15);
+}
+
+.btn-special.active {
+    color: #f59f00;
+    border-color: #f59f00;
+    background: #fff9db;
+}
+
+.btn-special:hover {
+    background: #f3f4f6;
+}
+
+/* Dark Mode for Follow System */
+[data-theme="dark"] .follow-item {
+    background-color: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .follow-name {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .btn-follow.following {
+    background-color: #21262d;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+
+[data-theme="dark"] .btn-follow.following:hover {
+    background-color: #30363d;
+    color: #ff7b72;
+}
+
+[data-theme="dark"] .btn-special {
+    background-color: #21262d;
+    border-color: #30363d;
+    color: #8b949e;
+}
+
+[data-theme="dark"] .btn-special.active {
+    background-color: rgba(245, 159, 0, 0.15);
+    color: #f59f00;
+    border-color: rgba(245, 159, 0, 0.4);
+}
+
+[data-theme="dark"] .follow-special-badge {
+    background: rgba(245, 159, 0, 0.15);
+    color: #f59f00;
+}
+
+
+.gitcode-body.truncated {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gitcode-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    padding-top: 0;
+    border-top: none; /* 移除顶部边框，更像卡片 */
+}
+
+.gitcode-tags {
+    display: flex;
+    gap: 8px;
+}
+
+.gitcode-tag-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    background: #ddf4ff; /* 浅蓝背景 */
+    border-radius: 12px;
+    font-size: 12px;
+    color: #0969da; /* 蓝色文字 */
+    font-weight: 500;
+}
+
+.gitcode-tag-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.gitcode-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #57606a;
+}
+
+.gitcode-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.gitcode-stat-item:hover {
+    color: #0969da;
+}
+
+.gitcode-stat-item i {
+    font-size: 14px;
+}
+
+/* Sidebar Placeholder Card */
+.sidebar-placeholder-card {
+    background: var(--card-bg);
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    transition: all 0.3s;
+}
+
+.sidebar-placeholder-card:hover {
+    border-color: var(--primary-color);
+    background: rgba(82, 196, 26, 0.02);
+}
+
+.placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #94a3b8;
 }
