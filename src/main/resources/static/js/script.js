@@ -744,6 +744,18 @@ function showUserCenter() {
         document.getElementById('uc-nickname-input').value = currentUser.nickname || '';
         document.getElementById('uc-username').innerText = '@' + currentUser.username;
         
+        // Load seeds
+        fetch('/nutrition/info')
+            .then(res => res.json())
+            .then(result => {
+                // Compatible with both AllResult structures if needed, but here we know it returns data in data field
+                const data = result.data; 
+                const count = data ? data.seedCount : 0;
+                const el = document.getElementById('uc-seed-count');
+                if(el) el.innerText = count;
+            })
+            .catch(e => console.error('Failed to load seeds', e));
+
         const img = document.getElementById('uc-avatar-img');
         const defaultIcon = document.getElementById('uc-avatar-default');
         

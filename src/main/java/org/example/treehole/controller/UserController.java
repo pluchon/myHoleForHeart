@@ -5,7 +5,7 @@ import cn.hutool.captcha.ICaptcha;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.AllExceptionResult;
+import org.example.treehole.entry.AllResult;
 import org.example.treehole.entry.TopUserDTO;
 import org.example.treehole.entry.User;
 import org.example.treehole.enums.loginAndResisterStatus;
@@ -93,7 +93,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public AllExceptionResult login(String username, String password, String captcha, HttpSession session){
+    public AllResult login(String username, String password, String captcha, HttpSession session){
         String captchaType = (String) session.getAttribute(Constant.CAPTCHA_TYPE_KEY);
         Object storedCaptcha = session.getAttribute(Constant.CAPTCHA_SESSION_KEY);
         Long storedTime = (Long) session.getAttribute(Constant.CAPTCHA_TIME_KEY);
@@ -101,7 +101,7 @@ public class UserController {
         String targetColor = (String) session.getAttribute(Constant.GALGAME_TARGET_COLOR_KEY);
 
         // 调用Service层进行综合校验和登录
-        AllExceptionResult result = userService.loginWithCaptcha(username, password, captcha, captchaType,
+        AllResult result = userService.loginWithCaptcha(username, password, captcha, captchaType,
                                                                     storedCaptcha, storedTime, correctIndex, targetColor);
 
         if (result.getStatus() == loginAndResisterStatus.SUCCESS) {
@@ -122,14 +122,14 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public AllExceptionResult register(User user){
+    public AllResult register(User user){
         //用户名，密码，昵称
         String username = user.getUsername();
         String password = user.getPassword();
         String nickname = user.getNickname();
         
         // 1. 通用校验
-        AllExceptionResult checkResult = userService.checkUser(username, password);
+        AllResult checkResult = userService.checkUser(username, password);
         if (checkResult.getStatus() != loginAndResisterStatus.SUCCESS) {
             return checkResult;
         }
@@ -137,15 +137,15 @@ public class UserController {
         // 2. 注册特有逻辑：昵称校验
         if (!userService.checkUser(nickname)) {
              //这里简单处理，如果昵称为空也返回参数错误
-             return AllExceptionResult.nickNameError();
+             return AllResult.nickNameError();
         }
         boolean result = userService.register(username,password,nickname);
         //判断注册成功与否
         if (result) {
-            return AllExceptionResult.success();
+            return AllResult.success();
         } else {
             //用户已存在
-            return AllExceptionResult.userExists();
+            return AllResult.userExists();
         }
     }
 
@@ -162,12 +162,12 @@ public class UserController {
 
     // 检查登录状态 (返回 JSON)
     @RequestMapping("/check_login")
-    public AllExceptionResult checkLogin(HttpSession session) {
+    public AllResult checkLogin(HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         if (userId == null) {
-            return AllExceptionResult.notLogin();
+            return AllResult.notLogin();
         }
-        return AllExceptionResult.success();
+        return AllResult.success();
     }
 
     //登出，并销毁Session
@@ -197,10 +197,10 @@ public class UserController {
 
     // 修改密码
     @PostMapping("/updatePassword")
-    public AllExceptionResult updatePassword(String oldPassword, String newPassword, HttpSession session) {
+    public AllResult updatePassword(String oldPassword, String newPassword, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         if (userId == null) {
-            return AllExceptionResult.userExists(); // 未登录
+            return AllResult.userExists(); // 未登录
         }
         return userService.updatePassword(userId, oldPassword, newPassword);
     }

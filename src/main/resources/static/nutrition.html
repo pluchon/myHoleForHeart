@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>树洞养料 - 每日签到</title>
+    <link rel="stylesheet" href="/css/style.css?v=33">
+    <link href="https://cdn.staticfile.net/remixicon/4.1.0/remixicon.css" rel="stylesheet">
+    <style>
+        .nutrition-container {
+            max-width: 1300px;
+            margin: 20px auto 20px; /* Reduced top margin to 20px */
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* 大日历样式 */
+        .calendar-wrapper {
+            display: flex;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin: 0 auto 30px;
+            min-height: auto;
+            text-align: left;
+            width: 100%;
+        }
+
+        .calendar-sidebar {
+            width: 320px; /* 加宽侧边栏 */
+            background-image: url('/picture/signIn.jpg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        /* 侧边栏遮罩，确保文字清晰 */
+        .calendar-sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4); /* 适当的遮罩 */
+            z-index: 1;
+        }
+
+        /* 侧边栏内容提升层级 */
+        .calendar-sidebar > * {
+            position: relative;
+            z-index: 2;
+        }
+
+
+        .sidebar-header .sidebar-title {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-header .sidebar-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-left: 2px;
+        }
+
+        .sidebar-seeds {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            margin: 20px 0;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .seed-label {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .seed-value {
+            font-size: 32px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .calendar-year {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .calendar-month {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .calendar-month-en {
+            font-size: 14px;
+            opacity: 0.8;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 15px;
+        }
+
+        .calendar-main {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 15px; /* 增加间距 */
+            flex: 1;
+        }
+
+        /* 隐藏原来的星期表头 */
+        .calendar-weekday {
+            display: none;
+        }
+
+        .calendar-day {
+            border-radius: 8px; /* 更方正的圆角 */
+            padding: 8px 12px;
+            position: relative;
+            cursor: default;
+            transition: all 0.2s;
+            background: #f8f9fa;
+            border: 1px solid #eee; /* 细边框 */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* 内容靠上 */
+            min-height: 60px; /* 降低高度，使其更扁平 */
+        }
+
+        .calendar-day:hover {
+            border-color: var(--primary-color);
+            background: #f0f9eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            z-index: 2;
+        }
+
+        .day-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .day-number {
+            font-size: 20px; /* 稍微调小数字 */
+            font-weight: 700;
+            color: #333;
+            font-family: 'Arial', sans-serif;
+            line-height: 1;
+        }
+        
+        .day-weekday-label {
+            font-size: 12px;
+            color: #999;
+            font-weight: normal;
+        }
+
+        .day-lunar {
+            font-size: 11px;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+
+        .day-lunar.festival {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        /* 节日样式增强 */
+        .day-lunar.festival::before {
+            content: '★ ';
+            font-size: 10px;
+            vertical-align: middle;
+        }
+
+        /* 状态样式 */
+        .calendar-day.today {
+            border: 2px solid var(--primary-color);
+            background: white;
+        }
+        
+        .calendar-day.today .day-number {
+            color: var(--primary-color);
+        }
+
+        .calendar-day.checked {
+            background: rgba(66, 230, 149, 0.15);
+            border-color: transparent;
+        }
+        
+        .calendar-day.checked::after {
+            content: '\eb7a'; /* ri-check-line */
+            font-family: 'remixicon';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: var(--primary-color);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        .calendar-day.checked .day-number {
+            color: var(--primary-color);
+        }
+
+        .calendar-day.missed {
+            background: #f5f5f5;
+            opacity: 0.7;
+        }
+
+        .calendar-day.missed .day-lunar {
+            color: #ccc;
+        }
+        
+        /* 补签/过期小红点 */
+        .calendar-day.missed::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 6px;
+            height: 6px;
+            background: #ff4d4f;
+            border-radius: 50%;
+        }
+
+        /* 签到按钮样式恢复 */
+        .big-check-in-btn {
+            padding: 15px 50px;
+            font-size: 20px;
+            border-radius: 50px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(66, 230, 149, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .big-check-in-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(66, 230, 149, 0.4);
+        }
+
+        .big-check-in-btn:disabled, .big-check-in-btn.checked {
+            background: #e6e6e6;
+            color: #999;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* 签到区域容器（移除背景图，移除白色背景） */
+        .check-in-container {
+            background: transparent;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px; /* 按钮和文字的间距 */
+            box-shadow: none;
+        }
+
+        /* 移除黑色遮罩 */
+        .check-in-container::before {
+            display: none;
+        }
+
+        .check-in-section, .streak-info {
+            position: relative;
+            z-index: 1;
+            margin: 0 !important;
+        }
+
+        .streak-info {
+            background: rgba(255, 255, 255, 0.6); /* 增加一点白色背景，防止完全透明看不清 */
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #333; /* 文字深色 */
+            padding: 15px 30px;
+            border-radius: 50px; /* 圆角 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        }
+
+        .streak-number {
+            color: var(--primary-color);
+            text-shadow: none;
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0 5px;
+        }
+
+        /* 优化月份切换按钮 */
+        .calendar-nav-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px; /* 圆角矩形 */
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(4px);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-nav-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .calendar-nav-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 连续签到奖励区域优化 */
+        .rewards-container {
+            background: white;
+            border-radius: 24px;
+            padding: 30px 50px 60px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            text-align: left;
+            position: relative;
+            z-index: 1;
+        }
+
+        .rewards-header {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rewards-timeline-wrapper {
+            position: relative;
+            margin: 0 20px; /* 给左右留点余地 */
+        }
+
+        .progress-track {
+            height: 12px;
+            background: #edf1f5;
+            border-radius: 10px;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #42e695, #3bb2b8);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 10px rgba(66, 230, 149, 0.3);
+        }
+
+        .reward-nodes {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 0;
+            z-index: 2;
+            display: flex; /* 虽然是绝对定位，但用来做容器 */
+        }
+
+        .reward-item {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .reward-item:hover {
+            transform: translate(-50%, -55%);
+        }
+
+        .reward-icon-box {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #ccc;
+            border: 3px solid #f0f0f0;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .reward-item.active .reward-icon-box {
+            background: #fff;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: 0 0 0 5px rgba(66, 230, 149, 0.2);
+        }
+
+        .reward-label {
+            font-size: 13px;
+            color: #888;
+            font-weight: 600;
+        }
+        
+        .reward-bonus {
+            font-size: 12px;
+            color: #ff9f43;
+            background: rgba(255, 159, 67, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-5px);}
+            60% {transform: translateY(-3px);}
+        }
+
+        /* 隐藏旧元素 */
+        .check-in-btn, .mini-check-in-btn { display: none; }
+        .calendar-header { display: none; } /* Use new sidebar */
+
+        .day-seeds {
+            font-size: 12px;
+            color: #F5B041;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* 响应式调整 */
+        /* 导航栏自适应布局修复 */
+        .navbar {
+            flex-wrap: nowrap;
+        }
+
+        .logo {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .nav-right {
+            flex-shrink: 0; 
+            min-width: 0;
+            justify-content: flex-end;
+            margin-left: auto; 
+        }
+
+        .nav-right .btn-outline {
+            flex-shrink: 0; 
+            white-space: nowrap; 
+        }
+
+        #user-status {
+            flex-shrink: 1; 
+            min-width: 0;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+        
+        #user-status > span {
+            min-width: 0;
+            flex-shrink: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        #user-status .btn-link {
+            display: block; 
+            max-width: 8em; 
+            overflow: hidden;
+            text-overflow: ellipsis; 
+            white-space: nowrap !important; 
+        }
+        
+        #user-status img, #user-status i {
+            flex-shrink: 0;
+        }
+        
+        #user-status .nav-icon-btn[href="message.html"] {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+            <i class="ri-tree-line" style="font-size: 24px; color: var(--primary-color);"></i>
+            <span>树洞 TreeHole</span>
+        </div>
+        <div class="nav-right" style="display: flex; align-items: center; gap: 15px;">
+            <a href="index.html" class="btn-outline" style="display: flex; align-items: center; gap: 5px; background: white; border-radius: 20px; padding: 6px 16px; text-decoration: none; color: var(--primary-color); border: 1px solid var(--primary-color);">
+                <i class="ri-arrow-left-line"></i> 返回首页
+            </a>
+             <div class="user-info" id="user-status">
+                <!-- 登录状态 -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container animate-fade-in">
+        <div class="glass-effect nutrition-container">
+            <!-- Big Calendar -->
+            <div class="calendar-wrapper">
+                <div class="calendar-sidebar">
+                    <div class="sidebar-header">
+                        <div class="sidebar-title"><i class="ri-tree-line"></i> 树洞养料站</div>
+                        <div class="sidebar-subtitle">每日签到，滋养心灵</div>
+                    </div>
+                    
+                    <div class="sidebar-seeds">
+                        <div class="seed-label">当前种子</div>
+                        <div class="seed-value">
+                            <i class="ri-seedling-fill" style="color: #ffde7d;"></i>
+                            <span id="total-seeds">--</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="calendar-year" id="cal-year">--</div>
+                        <div class="calendar-month" id="cal-month">--月</div>
+                        <div class="calendar-month-en" id="cal-month-en">--</div>
+                        <div class="calendar-nav">
+                            <button class="calendar-nav-btn" onclick="changeMonth(-1)"><i class="ri-arrow-left-s-line"></i></button>
+                            <button class="calendar-nav-btn" onclick="changeMonth(1)"><i class="ri-arrow-right-s-line"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="calendar-main">
+                    <div class="calendar-grid" id="calendar-grid">
+                        <!-- Weekdays -->
+                        <div class="calendar-weekday">日</div>
+                        <div class="calendar-weekday">一</div>
+                        <div class="calendar-weekday">二</div>
+                        <div class="calendar-weekday">三</div>
+                        <div class="calendar-weekday">四</div>
+                        <div class="calendar-weekday">五</div>
+                        <div class="calendar-weekday">六</div>
+                        <!-- Days generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in & Streak Area -->
+            <div class="check-in-container">
+                <div class="check-in-section">
+                    <button id="check-in-btn" class="big-check-in-btn" onclick="doCheckIn()">
+                        <i class="ri-calendar-check-fill"></i>
+                        <span>立即签到</span>
+                    </button>
+                </div>
+                
+                <div class="streak-info">
+                    已连续签到 <span id="continuous-days" class="streak-number">--</span> 天
+                </div>
+            </div>
+
+            <!-- Rewards Progress -->
+            <div class="rewards-container">
+                <div class="rewards-header">
+                    <i class="ri-gift-2-fill" style="color: #ff9f43;"></i> 连续签到奖励
+                </div>
+                <div class="rewards-timeline-wrapper">
+                    <div class="progress-track">
+                        <div class="progress-bar" id="rewards-progress"></div>
+                    </div>
+                    <div class="reward-nodes">
+                        <!-- 7 Days -->
+                        <div class="reward-item" id="reward-7" style="left: 23%;">
+                            <div class="reward-icon-box">
+                                <i class="ri-gift-line"></i>
+                            </div>
+                            <div class="reward-label">7天</div>
+                            <div class="reward-bonus">+100</div>
+                        </div>
+                        <!-- 14 Days -->
+                        <div class="reward-item" id="reward-14" style="left: 46%;">
+                            <div class="reward-icon-box">
+                                <i class="ri-treasure-map-line"></i>
+                            </div>
+                            <div class="reward-label">14天</div>
+                            <div class="reward-bonus">+200</div>
+                        </div>
+                        <!-- 30 Days -->
+                        <div class="reward-item" id="reward-30" style="left: 100%;">
+                            <div class="reward-icon-box">
+                                <i class="ri-trophy-line"></i>
+                            </div>
+                            <div class="reward-label">30天</div>
+                            <div class="reward-bonus">+500</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户中心弹窗 -->
+    <div id="user-center-modal" class="modal-overlay" onclick="if(event.target === this) closeUserCenter()">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h3>个人中心</h3>
+                <span class="close-btn" onclick="closeUserCenter()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="uc-info-section">
+                    <div class="uc-avatar-wrapper" onclick="document.getElementById('avatar-input').click()">
+                        <img id="uc-avatar-img" src="" alt="头像">
+                        <div id="uc-avatar-default" class="avatar-default"><i class="ri-user-line"></i></div>
+                        <div class="avatar-edit-hint"><i class="ri-camera-line"></i></div>
+                        <input type="file" id="avatar-input" accept="image/*" style="display: none;" onchange="previewAvatar(this)">
+                    </div>
+                    <div class="uc-text-info">
+                        <div class="uc-username" id="uc-username">@username</div>
+                        <div class="uc-seeds" style="font-size: 14px; color: #ff9f43; margin: 4px 0; display: flex; align-items: center; gap: 4px;">
+                             <i class="ri-seedling-fill"></i> <span id="uc-seed-count">--</span> 种子
+                        </div>
+                        <input type="text" id="uc-nickname-input" class="uc-input" placeholder="设置昵称">
+                    </div>
+                </div>
+                
+                <div class="uc-actions">
+                    <button class="btn-primary" onclick="saveUserInfo()">保存修改</button>
+                    <button class="btn-outline" onclick="toggleChangePassword()">修改密码</button>
+                    <button class="btn-danger" onclick="logout()">退出登录</button>
+                </div>
+                
+                <!-- 修改密码区域 -->
+                <div id="password-change-area" class="password-area" style="display: none;">
+                    <input type="password" id="old-password" class="uc-input" placeholder="旧密码">
+                    <input type="password" id="new-password" class="uc-input" placeholder="新密码 (6-20位)">
+                    <button class="btn-primary" onclick="submitChangePassword()" style="margin-top: 10px; width: 100%;">确认修改</button>
+                </div>
+
+                <div class="uc-divider"></div>
+                
+                <div class="uc-my-holes">
+                    <div class="uc-tabs">
+                        <button id="tab-my-holes" class="uc-tab active" onclick="switchUcTab('my-holes')">我的发布</button>
+                        <button id="tab-my-favorites" class="uc-tab" onclick="switchUcTab('my-favorites')">我的收藏</button>
+                        <button id="tab-my-follows" class="uc-tab" onclick="switchUcTab('my-follows')">我的关注</button>
+                        <button id="tab-my-fans" class="uc-tab" onclick="switchUcTab('my-fans')">我的粉丝</button>
+                    </div>
+                    <div id="my-holes-list" class="my-holes-list">
+                        <!-- 我的树洞列表 -->
+                    </div>
+                    <div id="my-favorites-list" class="my-holes-list" style="display: none;">
+                        <!-- 我的收藏列表 -->
+                    </div>
+                    <div id="my-follows-list" class="my-holes-list" style="display: none;">
+                        <!-- 我的关注列表 -->
+                    </div>
+                    <div id="my-fans-list" class="my-holes-list" style="display: none;">
+                        <!-- 我的粉丝列表 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户卡片弹窗挂载点 -->
+    <div id="user-card-overlay" class="user-card-overlay" onclick="closeUserCard()"></div>
+    <div id="user-card-popup" class="user-card-popup">
+        <!-- 内容动态生成 -->
+    </div>
+
+    <script src="/js/script.js?v=30"></script>
+    <script>
+        let checkInLogs = [];
+
+        // Initialize
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth() + 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus(); // From script.js
+            loadNutritionInfo();
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        async function loadNutritionInfo() {
+            try {
+                const response = await fetch('/nutrition/info');
+                const result = await response.json();
+                
+                if (result.code === 100 || result.status === 'SUCCESS') {
+                    const data = result.data;
+                    updateUI(data);
+                } else if (result.status === 'NOT_LOGIN') {
+                     window.location.href = 'login.html';
+                }
+            } catch (error) {
+                console.error('Failed to load nutrition info:', error);
+            }
+        }
+
+        function updateUI(data) {
+            document.getElementById('total-seeds').innerText = data.seedCount;
+            document.getElementById('continuous-days').innerText = data.continuousDays;
+
+            // Check if checked in today
+            const lastDate = new Date(data.lastCheckInDate);
+            const today = new Date();
+            // Compare date parts only
+            const isToday = data.lastCheckInDate && 
+                           lastDate.getDate() === today.getDate() && 
+                           lastDate.getMonth() === today.getMonth() && 
+                           lastDate.getFullYear() === today.getFullYear();
+
+            const btn = document.getElementById('check-in-btn');
+            if (isToday) {
+                btn.classList.add('checked');
+                btn.innerHTML = '<i class="ri-check-double-line"></i><span>已签到</span>';
+                btn.onclick = null;
+            } else {
+                btn.classList.remove('checked');
+                btn.innerHTML = '<i class="ri-calendar-check-fill"></i><span>立即签到</span>';
+                btn.onclick = doCheckIn;
+            }
+
+            // Update Rewards Progress & Nodes
+            const days = data.continuousDays;
+            const maxDays = 30;
+            const progress = Math.min((days / maxDays) * 100, 100);
+            
+            // Animate width
+            setTimeout(() => {
+                document.getElementById('rewards-progress').style.width = `${progress}%`;
+            }, 100);
+
+            // Reset active states first
+            document.querySelectorAll('.reward-item').forEach(el => el.classList.remove('active'));
+            
+            if (days >= 7) document.getElementById('reward-7').classList.add('active');
+            if (days >= 14) document.getElementById('reward-14').classList.add('active');
+            if (days >= 30) document.getElementById('reward-30').classList.add('active');
+        }
+
+        async function doCheckIn() {
+            try {
+                const response = await fetch('/nutrition/check-in', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.status === 'SUCCESS') {
+                    // Update UI with new data
+                    const reward = result.data.reward;
+                    const newTotal = result.data.seedCount;
+                    
+                    document.getElementById('total-seeds').innerText = newTotal;
+                    document.getElementById('total-seeds').classList.add('animate-pop');
+                    setTimeout(() => document.getElementById('total-seeds').classList.remove('animate-pop'), 500);
+                    
+                    document.getElementById('continuous-days').innerText = result.data.continuousDays;
+                    
+                    // Show success message
+                    alert(result.errorMessage || `签到成功！获得 ${reward} 种子`);
+                    
+                    // Update button state
+                    const btn = document.getElementById('check-in-btn');
+                    btn.classList.add('checked');
+                    btn.innerHTML = '<i class="ri-check-double-line"></i><span>已签到</span>';
+                    btn.onclick = null;
+                    
+                    // Refresh full info to update timeline properly
+                    loadNutritionInfo();
+                    // Refresh calendar to show the check mark
+                    renderCalendar(currentYear, currentMonth);
+                } else if (result.status === 'CHECK_IN_ALREADY') {
+                    alert('今天已经签到过了哦~');
+                    loadNutritionInfo();
+                } else {
+                    alert(result.errorMessage || '签到失败');
+                }
+            } catch (error) {
+                console.error('Check-in failed:', error);
+                alert('网络错误，请稍后重试');
+            }
+        }
+
+        // Calendar Logic
+        function changeMonth(offset) {
+            currentMonth += offset;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            } else if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            renderCalendar(currentYear, currentMonth);
+        }
+
+        async function fetchMonthLogs(year, month) {
+            const formattedMonth = `${year}-${String(month).padStart(2, '0')}`;
+            try {
+                const response = await fetch(`/nutrition/month-log?yearMonth=${formattedMonth}`);
+                const result = await response.json();
+                if (result.code === 200 || result.status === 'SUCCESS') {
+                    return result.data || [];
+                }
+                return [];
+            } catch (error) {
+                console.error('Failed to fetch month logs:', error);
+                return [];
+            }
+        }
+
+        async function renderCalendar(year, month) {
+            // Update Sidebar Info
+            document.getElementById('cal-year').innerText = year;
+            document.getElementById('cal-month').innerText = month + '月';
+            
+            const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+                "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+            ];
+            document.getElementById('cal-month-en').innerText = monthNames[month - 1];
+
+            const grid = document.getElementById('calendar-grid');
+            
+            // Re-fetching logs
+            const logs = await fetchMonthLogs(year, month);
+            checkInLogs = logs; // Store for reference if needed
+
+            // Clear days (keep headers)
+            const weekdays = Array.from(grid.querySelectorAll('.calendar-weekday'));
+            grid.innerHTML = '';
+            weekdays.forEach(day => grid.appendChild(day));
+
+            // Calculate days
+            const firstDayOfMonth = new Date(year, month - 1, 1).getDay(); // 0 (Sun) - 6 (Sat)
+            const daysInMonth = new Date(year, month, 0).getDate(); // Last day of this month
+            
+            const today = new Date();
+            const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            
+            // Add empty placeholders for previous month
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyCell = document.createElement('div');
+                grid.appendChild(emptyCell);
+            }
+
+            // Generate days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const currentDayDate = new Date(year, month - 1, day);
+                
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+                
+                // Weekday calc
+                const weekDayCN = ['日', '一', '二', '三', '四', '五', '六'][currentDayDate.getDay()];
+
+                // Deterministic Seed Count (10-15)
+                // Simple hash of date string to ensure same count for same date
+                let hash = 0;
+                for (let i = 0; i < dateStr.length; i++) {
+                    hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+                    hash |= 0;
+                }
+                const seedCount = (Math.abs(hash) % 6) + 10;
+
+                dayEl.innerHTML = `
+                    <div class="day-header">
+                        <span class="day-number">${day}</span>
+                        <span class="day-weekday-label">周${weekDayCN}</span>
+                    </div>
+                    <div class="day-seeds">
+                        <i class="ri-seedling-line"></i> +${seedCount}
+                    </div>
+                `;
+
+                const isChecked = logs.includes(dateStr);
+                
+                if (currentDayDate.getTime() === todayZero.getTime()) {
+                    dayEl.classList.add('today');
+                }
+
+                if (isChecked) {
+                    dayEl.classList.add('checked');
+                } else if (currentDayDate < todayZero) {
+                    dayEl.classList.add('missed');
+                }
+
+                grid.appendChild(dayEl);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -19,14 +19,19 @@
         </div>
         
         <div class="nav-right" style="display: flex; align-items: center; gap: 15px;">
+            <!-- 树洞养料 (签到) -->
+            <div class="nav-icon-btn" onclick="window.location.href='nutrition.html'" title="树洞养料">
+                <i class="ri-seedling-line"></i>
+            </div>
+
             <!-- AI树洞 -->
             <div class="nav-icon-btn" onclick="window.location.href='ai_chat.html'" title="AI树洞">
                 <i class="ri-robot-2-line"></i>
             </div>
 
-            <!-- 真正匿名树洞 -->
-            <div class="nav-icon-btn" onclick="window.location.href='anonymous.html'" title="匿名树洞">
-                <i class="ri-spy-line"></i>
+            <!-- 真正匿名树洞 -> 漂流树洞 -->
+            <div class="nav-icon-btn" onclick="window.location.href='drift_hole.html'" title="漂流树洞">
+                <i class="ri-sailboat-line"></i>
             </div>
 
             <!-- 时光胶囊 -->
@@ -168,6 +173,9 @@
                     </div>
                     <div class="uc-text-info">
                         <div class="uc-username" id="uc-username">@username</div>
+                        <div class="uc-seeds" style="font-size: 14px; color: #ff9f43; margin: 4px 0; display: flex; align-items: center; gap: 4px;">
+                             <i class="ri-seedling-fill"></i> <span id="uc-seed-count">--</span> 种子
+                        </div>
                         <input type="text" id="uc-nickname-input" class="uc-input" placeholder="设置昵称">
                     </div>
                 </div>

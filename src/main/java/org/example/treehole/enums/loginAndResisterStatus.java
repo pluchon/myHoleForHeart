@@ -27,7 +27,8 @@ public enum loginAndResisterStatus {
     NOT_FOLLOWED(-17),//未关注该用户
     FOLLOW_OP_FAILED(-18),//关注操作失败
     ANONYMOUS_PUBLISH_FAILED(-19),//匿名树洞发布失败
-    AI_ERROR(-20);//AI错误
+    AI_ERROR(-20),//AI错误
+    CHECK_IN_ALREADY(-21);//今日已签到
 
     private Integer code;
 

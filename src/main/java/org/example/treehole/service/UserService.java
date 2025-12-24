@@ -3,7 +3,7 @@ package org.example.treehole.service;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.ReUtil;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.AllExceptionResult;
+import org.example.treehole.entry.AllResult;
 import org.example.treehole.entry.TopUserDTO;
 import org.example.treehole.entry.User;
 import org.example.treehole.entry.UserFollow;
@@ -33,25 +33,25 @@ public class UserService {
     private UserFollowService userFollowService;
 
     // 通用校验逻辑
-    public AllExceptionResult checkUser(String username, String password) {
+    public AllResult checkUser(String username, String password) {
         //1. 校验非法字符 (使用 Hutool Validator)
         // 用户名和密码只允许：字母、数字、下划线 (isGeneral)
         if (!Validator.isGeneral(username) || !Validator.isGeneral(password)) {
-            return AllExceptionResult.illegalCharacter();
+            return AllResult.illegalCharacter();
         }
 
         //2. 超过规定长度
         if(username.length() > Constant.MAX_LENGTH || password.length() > Constant.MAX_LENGTH){
-            return AllExceptionResult.overLength();
+            return AllResult.overLength();
         }
 
         //3. 不足规定长度
         if(username.length() < Constant.MIN_LENGTH || password.length() < Constant.MIN_LENGTH){
-            return AllExceptionResult.inSufficientLength();
+            return AllResult.inSufficientLength();
         }
         
         // 校验通过
-        return AllExceptionResult.success();
+        return AllResult.success();
     }
 
     // 校验昵称 (单独的方法，因为昵称允许中文)
@@ -160,10 +160,10 @@ public class UserService {
     }
 
     // 综合登录校验逻辑
-    public AllExceptionResult loginWithCaptcha(String username, String password, String captcha, String captchaType,
-                                               Object storedCaptchaObj, Long storedTime, Integer correctIndex, String targetColor) {
+    public AllResult loginWithCaptcha(String username, String password, String captcha, String captchaType,
+                                      Object storedCaptchaObj, Long storedTime, Integer correctIndex, String targetColor) {
         // 1. 通用校验
-        AllExceptionResult checkResult = checkUser(username, password);
+        AllResult checkResult = checkUser(username, password);
         if (checkResult.getStatus() != loginAndResisterStatus.SUCCESS) {
             return checkResult;
         }
@@ -171,35 +171,35 @@ public class UserService {
         // 2. 验证码校验
         if ("GALGAME".equals(captchaType)) {
              if (correctIndex == null) {
-                 return AllExceptionResult.captchaIllegal();
+                 return AllResult.captchaIllegal();
              }
              try {
                  int userIndex = Integer.parseInt(captcha);
                  if (userIndex != correctIndex) {
-                      AllExceptionResult res = AllExceptionResult.captchaError();
+                      AllResult res = AllResult.captchaError();
                       res.setErrorMessage("杂鱼，连" + (targetColor!=null?targetColor:"") + "女孩子都分辨不出来了吗");
                       return res;
                  }
              } catch (NumberFormatException e) {
-                 return AllExceptionResult.captchaError();
+                 return AllResult.captchaError();
              }
         } else if ("jigsaw".equals(captchaType)) {
-            if (storedCaptchaObj == null || storedTime == null) return AllExceptionResult.captchaIllegal();
+            if (storedCaptchaObj == null || storedTime == null) return AllResult.captchaIllegal();
             try {
                 int x = Integer.parseInt(captcha); // 用户发送的x偏移量
                 int storedX = Integer.parseInt(storedCaptchaObj.toString());
                 if (Math.abs(x - storedX) > 5) { // 5px误差允许
-                    return AllExceptionResult.captchaError();
+                    return AllResult.captchaError();
                 }
             } catch (Exception e) {
-                return AllExceptionResult.captchaError();
+                return AllResult.captchaError();
             }
         } else if ("textclick".equals(captchaType)) {
-            if (storedCaptchaObj == null || !(storedCaptchaObj instanceof java.util.List)) return AllExceptionResult.captchaIllegal();
+            if (storedCaptchaObj == null || !(storedCaptchaObj instanceof java.util.List)) return AllResult.captchaIllegal();
             try {
                 java.util.List<java.awt.Point> storedPoints = (java.util.List<java.awt.Point>) storedCaptchaObj;
                 String[] userPoints = captcha.split(";");
-                if (userPoints.length != storedPoints.size()) return AllExceptionResult.captchaError();
+                if (userPoints.length != storedPoints.size()) return AllResult.captchaError();
                 
                 for (int i = 0; i < storedPoints.size(); i++) {
                     String[] coords = userPoints[i].split(",");
@@ -208,33 +208,33 @@ public class UserService {
                     java.awt.Point sp = storedPoints.get(i);
                     // 距离校验（半径30px）
                     if (Math.pow(ux - sp.x, 2) + Math.pow(uy - sp.y, 2) > 900) {
-                         return AllExceptionResult.captchaError();
+                         return AllResult.captchaError();
                     }
                 }
             } catch (Exception e) {
-                return AllExceptionResult.captchaError();
+                return AllResult.captchaError();
             }
         } else {
             String storedCaptcha = (storedCaptchaObj instanceof String) ? (String) storedCaptchaObj : null;
             if (!StringUtils.hasLength(captcha) || !StringUtils.hasLength(storedCaptcha) || storedTime == null) {
-                return AllExceptionResult.captchaIllegal();
+                return AllResult.captchaIllegal();
             }
             if (System.currentTimeMillis() - storedTime > Constant.CAPTCHA_EXPIRATION_TIME) {
-                return AllExceptionResult.captchaTimeOut();
+                return AllResult.captchaTimeOut();
             }
             if (!storedCaptcha.equalsIgnoreCase(captcha)) {
-                return AllExceptionResult.captchaError();
+                return AllResult.captchaError();
             }
         }
 
         // 3. 用户登录
         User user = login(username, password);
         if (user == null) {
-            return AllExceptionResult.userExists();
+            return AllResult.userExists();
         }
 
         // 登录成功
-        AllExceptionResult success = AllExceptionResult.success();
+        AllResult success = AllResult.success();
         success.setData(user);
         if ("GALGAME".equals(captchaType)) {
             success.setErrorMessage("提示：你真的是GalGame高手");
@@ -356,19 +356,19 @@ public class UserService {
     }
 
     // 修改密码逻辑
-    public AllExceptionResult updatePassword(Long userId, String oldPassword, String newPassword) {
+    public AllResult updatePassword(Long userId, String oldPassword, String newPassword) {
         if (!StringUtils.hasLength(oldPassword) || !StringUtils.hasLength(newPassword)) {
-            return AllExceptionResult.digit(); // 简单复用参数错误的返回
+            return AllResult.digit(); // 简单复用参数错误的返回
         }
 
         User user = getById(userId);
         if (user == null) {
-            return AllExceptionResult.userExists(); // 复用用户错误
+            return AllResult.userExists(); // 复用用户错误
         }
 
         // 验证旧密码
         if (!user.getPassword().equals(oldPassword)) {
-            AllExceptionResult result = new AllExceptionResult();
+            AllResult result = new AllResult();
             result.setStatus(loginAndResisterStatus.PASSWORDERROR);
             result.setErrorMessage("旧密码错误");
             return result;
@@ -376,13 +376,13 @@ public class UserService {
 
         // 验证新密码格式
         //复用 checkUser 逻辑，传入 username 作为占位符
-        AllExceptionResult checkResult = checkUser("username", newPassword);
+        AllResult checkResult = checkUser("username", newPassword);
         if (checkResult.getStatus() != loginAndResisterStatus.SUCCESS) {
             return checkResult;
         }
 
         // 修改密码
         userMapper.updatePassword(userId, newPassword);
-        return AllExceptionResult.success();
+        return AllResult.success();
     }
 }

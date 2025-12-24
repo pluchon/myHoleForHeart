@@ -2,7 +2,7 @@ package org.example.treehole.controller;
 
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.AllExceptionResult;
+import org.example.treehole.entry.AllResult;
 import org.example.treehole.entry.UserFollow;
 import org.example.treehole.service.UserFollowService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,22 +31,22 @@ public class UserFollowController {
      * @return LoginAndResisterResult
      */
     @PostMapping("/toggle")
-    public AllExceptionResult toggleFollow(@RequestParam Long followedId, HttpSession session) {
+    public AllResult toggleFollow(@RequestParam Long followedId, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         
         // 登录校验
         if (userId == null) {
-            return AllExceptionResult.notLogin();
+            return AllResult.notLogin();
         }
         
         // 自我关注校验
         if (userId.equals(followedId)) {
-            return AllExceptionResult.followMyself();
+            return AllResult.followMyself();
         }
 
         try {
             boolean isFollowing = userFollowService.toggleFollow(userId, followedId);
-            AllExceptionResult result = AllExceptionResult.success();
+            AllResult result = AllResult.success();
             result.setErrorMessage(isFollowing ? "关注成功" : "已取消关注");
             
             Map<String, Object> data = new HashMap<>();
@@ -56,7 +56,7 @@ public class UserFollowController {
             return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return AllExceptionResult.followOpFailed("操作失败: " + e.getMessage());
+            return AllResult.followOpFailed("操作失败: " + e.getMessage());
         }
     }
 
@@ -67,22 +67,22 @@ public class UserFollowController {
      * @return LoginAndResisterResult
      */
     @PostMapping("/toggleSpecial")
-    public AllExceptionResult toggleSpecial(@RequestParam Long followedId, HttpSession session) {
+    public AllResult toggleSpecial(@RequestParam Long followedId, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         
         if (userId == null) {
-            return AllExceptionResult.notLogin();
+            return AllResult.notLogin();
         }
         
         // 检查是否已关注
         UserFollow uf = userFollowService.getFollowStatus(userId, followedId);
         if (uf == null) {
-            return AllExceptionResult.notFollowed();
+            return AllResult.notFollowed();
         }
 
         try {
             boolean isSpecial = userFollowService.toggleSpecial(userId, followedId);
-            AllExceptionResult result = AllExceptionResult.success();
+            AllResult result = AllResult.success();
             result.setErrorMessage(isSpecial ? "已设为特别关注" : "已取消特别关注");
             
             Map<String, Object> data = new HashMap<>();
@@ -92,7 +92,7 @@ public class UserFollowController {
             return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return AllExceptionResult.followOpFailed("操作失败: " + e.getMessage());
+            return AllResult.followOpFailed("操作失败: " + e.getMessage());
         }
     }
 
@@ -131,7 +131,7 @@ public class UserFollowController {
      * @return LoginAndResisterResult
      */
     @GetMapping("/status")
-    public AllExceptionResult getStatus(@RequestParam Long followedId, HttpSession session) {
+    public AllResult getStatus(@RequestParam Long followedId, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         Map<String, Object> data = new HashMap<>();
         
@@ -144,7 +144,7 @@ public class UserFollowController {
             data.put("isSpecial", uf != null && uf.getIsSpecial() == 1);
         }
         
-        AllExceptionResult result = AllExceptionResult.success();
+        AllResult result = AllResult.success();
         result.setData(data);
         return result;
     }
