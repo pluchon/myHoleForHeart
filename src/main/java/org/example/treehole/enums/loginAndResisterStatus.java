@@ -25,7 +25,9 @@ public enum loginAndResisterStatus {
     TIME_CAPSULE(-15),//时间胶囊埋藏失败
     FOLLOW_MYSELF(-16),//不能关注自己
     NOT_FOLLOWED(-17),//未关注该用户
-    FOLLOW_OP_FAILED(-18);//关注操作失败
+    FOLLOW_OP_FAILED(-18),//关注操作失败
+    ANONYMOUS_PUBLISH_FAILED(-19),//匿名树洞发布失败
+    AI_ERROR(-20);//AI错误
 
     private Integer code;
 

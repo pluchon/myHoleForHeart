@@ -1608,6 +1608,13 @@ body::after {
     width: 100%;
     /* max-width: 1200px;  Remove max-width to align with dashboard */
     margin: 0 auto;
+
+    background: rgba(255, 255, 255, 0.85); /* 半透明蒙版背景 */
+    backdrop-filter: blur(10px); /* 毛玻璃效果 */
+    border: 3px solid #76d275; /* 绿色描边 */
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .feed-main-column {
@@ -2123,4 +2130,9 @@ body::after {
     flex-direction: column;
     align-items: center;
     color: #94a3b8;
+}
+
+/* Fix flatpickr z-index in modal */
+.flatpickr-calendar {
+    z-index: 2000 !important;
 }

@@ -31,4 +31,12 @@ public class UserFollow {
     
     /** 被关注者头像 */
     private String followedAvatar;
+
+    // --- 粉丝相关字段 ---
+    /** 粉丝昵称 */
+    private String followerNickname;
+    /** 粉丝头像 */
+    private String followerAvatar;
+    /** 是否互相关注 */
+    private boolean isMutual;
 }

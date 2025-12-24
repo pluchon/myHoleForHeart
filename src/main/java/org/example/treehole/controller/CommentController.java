@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
 import org.example.treehole.entry.Comment;
-import org.example.treehole.entry.LoginAndResisterResult;
+import org.example.treehole.entry.AllExceptionResult;
 import org.example.treehole.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,10 +24,10 @@ public class CommentController {
     private CommentService commentService;
 
     @RequestMapping("/add")
-    public LoginAndResisterResult add(Long holeId, String content, HttpSession session){
+    public AllExceptionResult add(Long holeId, String content, HttpSession session){
         Long userId = (Long)session.getAttribute(Constant.USER_ID);
         if (userId == null) {
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
 
         Comment comment = new Comment();
@@ -35,7 +35,7 @@ public class CommentController {
         comment.setContent(content);
         comment.setUserId(userId);
         commentService.addComment(comment);
-        return LoginAndResisterResult.success();
+        return AllExceptionResult.success();
     }
 
     @RequestMapping("/getComments")

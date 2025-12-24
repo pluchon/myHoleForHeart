@@ -52,4 +52,16 @@ public interface UserFollowMapper {
      */
     @Select("SELECT * FROM user_follow WHERE follower_id = #{followerId} AND followed_id = #{followedId}")
     UserFollow selectOne(@Param("followerId") Long followerId, @Param("followedId") Long followedId);
+
+    /**
+     * 获取我的粉丝列表
+     * 关联查询粉丝信息，并判断是否互相关注
+     */
+    @Select("SELECT f.*, u.nickname as followerNickname, u.avatar as followerAvatar, " +
+            "(SELECT count(*) FROM user_follow f2 WHERE f2.follower_id = f.followed_id AND f2.followed_id = f.follower_id) > 0 as isMutual " +
+            "FROM user_follow f " +
+            "LEFT JOIN user u ON f.follower_id = u.id " +
+            "WHERE f.followed_id = #{userId} " +
+            "ORDER BY f.create_time DESC")
+    List<UserFollow> selectFansByUserId(Long userId);
 }

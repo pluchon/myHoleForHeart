@@ -2,7 +2,7 @@ package org.example.treehole.controller;
 
 import cn.hutool.core.util.ObjectUtil;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.LoginAndResisterResult;
+import org.example.treehole.entry.AllExceptionResult;
 import org.example.treehole.entry.TimeCapsule;
 import org.example.treehole.entry.User;
 import org.example.treehole.service.TimeCapsuleService;
@@ -25,16 +25,16 @@ public class TimeCapsuleController {
 
     // 埋藏胶囊
     @PostMapping("/bury")
-    public LoginAndResisterResult bury(@RequestBody TimeCapsule capsule, HttpSession session) {
+    public AllExceptionResult bury(@RequestBody TimeCapsule capsule, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         // 使用 Hutool 判断用户ID是否为空
         if (ObjectUtil.isNull(userId)) {
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
 
         User user = userService.getById(userId);
         if (user == null) {
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
 
         capsule.setUserId(user.getId());
@@ -43,9 +43,9 @@ public class TimeCapsuleController {
         boolean success = timeCapsuleService.buryCapsule(capsule);
 
         if (success) {
-            return LoginAndResisterResult.success();
+            return AllExceptionResult.success();
         } else {
-            return LoginAndResisterResult.timeCapsuleError();
+            return AllExceptionResult.timeCapsuleError();
         }
     }
 

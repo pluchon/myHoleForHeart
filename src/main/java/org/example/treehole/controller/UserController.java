@@ -2,11 +2,11 @@ package org.example.treehole.controller;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.ICaptcha;
-import cn.hutool.captcha.LineCaptcha;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.LoginAndResisterResult;
+import org.example.treehole.entry.AllExceptionResult;
+import org.example.treehole.entry.TopUserDTO;
 import org.example.treehole.entry.User;
 import org.example.treehole.enums.loginAndResisterStatus;
 import org.example.treehole.service.UserService;
@@ -22,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import java.util.List;
 
 /**
  * @author pluchon
@@ -91,7 +93,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public LoginAndResisterResult login(String username, String password, String captcha, HttpSession session){
+    public AllExceptionResult login(String username, String password, String captcha, HttpSession session){
         String captchaType = (String) session.getAttribute(Constant.CAPTCHA_TYPE_KEY);
         Object storedCaptcha = session.getAttribute(Constant.CAPTCHA_SESSION_KEY);
         Long storedTime = (Long) session.getAttribute(Constant.CAPTCHA_TIME_KEY);
@@ -99,7 +101,7 @@ public class UserController {
         String targetColor = (String) session.getAttribute(Constant.GALGAME_TARGET_COLOR_KEY);
 
         // 调用Service层进行综合校验和登录
-        LoginAndResisterResult result = userService.loginWithCaptcha(username, password, captcha, captchaType, 
+        AllExceptionResult result = userService.loginWithCaptcha(username, password, captcha, captchaType,
                                                                     storedCaptcha, storedTime, correctIndex, targetColor);
 
         if (result.getStatus() == loginAndResisterStatus.SUCCESS) {
@@ -120,14 +122,14 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public LoginAndResisterResult register(User user){
+    public AllExceptionResult register(User user){
         //用户名，密码，昵称
         String username = user.getUsername();
         String password = user.getPassword();
         String nickname = user.getNickname();
         
         // 1. 通用校验
-        LoginAndResisterResult checkResult = userService.checkUser(username, password);
+        AllExceptionResult checkResult = userService.checkUser(username, password);
         if (checkResult.getStatus() != loginAndResisterStatus.SUCCESS) {
             return checkResult;
         }
@@ -135,15 +137,15 @@ public class UserController {
         // 2. 注册特有逻辑：昵称校验
         if (!userService.checkUser(nickname)) {
              //这里简单处理，如果昵称为空也返回参数错误
-             return LoginAndResisterResult.nickNameError();
+             return AllExceptionResult.nickNameError();
         }
         boolean result = userService.register(username,password,nickname);
         //判断注册成功与否
         if (result) {
-            return LoginAndResisterResult.success();
+            return AllExceptionResult.success();
         } else {
             //用户已存在
-            return LoginAndResisterResult.userExists();
+            return AllExceptionResult.userExists();
         }
     }
 
@@ -156,6 +158,16 @@ public class UserController {
             return null;
         }
         return userService.getById(userId);
+    }
+
+    // 检查登录状态 (返回 JSON)
+    @RequestMapping("/check_login")
+    public AllExceptionResult checkLogin(HttpSession session) {
+        Long userId = (Long) session.getAttribute(Constant.USER_ID);
+        if (userId == null) {
+            return AllExceptionResult.notLogin();
+        }
+        return AllExceptionResult.success();
     }
 
     //登出，并销毁Session
@@ -185,11 +197,20 @@ public class UserController {
 
     // 修改密码
     @PostMapping("/updatePassword")
-    public LoginAndResisterResult updatePassword(String oldPassword, String newPassword, HttpSession session) {
+    public AllExceptionResult updatePassword(String oldPassword, String newPassword, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         if (userId == null) {
-            return LoginAndResisterResult.userExists(); // 未登录
+            return AllExceptionResult.userExists(); // 未登录
         }
         return userService.updatePassword(userId, oldPassword, newPassword);
+    }
+
+    /**
+     * 获取粉丝榜 Top 10
+     */
+    @RequestMapping("/top10")
+    public List<TopUserDTO> top10(HttpSession session){
+        Long currentUserId = (Long)session.getAttribute(Constant.USER_ID);
+        return userService.getTop10Authors(currentUserId);
     }
 }

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>真正的匿名树洞</title>
+    <link href="https://cdn.staticfile.net/remixicon/4.1.0/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a; /* Fallback color */
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .bg-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/picture/unknowName.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -3;
+        }
+        .bg-overlay {
+            display: none;
+        }
+        .anonymous-container {
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            padding: 60px 40px;
+            background: rgba(0, 0, 0, 0.6); /* Darker container for Dark Mode feel */
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: floatUp 1s ease-out forwards;
+            position: relative;
+        }
+        @keyframes floatUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .quote-icon {
+            font-size: 40px;
+            color: #ccc; /* Lighter color for better visibility against dark bg */
+            margin-bottom: 20px;
+        }
+        .content {
+            font-size: 24px;
+            line-height: 1.6;
+            margin-bottom: 50px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            word-break: break-all;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Text shadow for readability */
+        }
+        .next-btn {
+            background: transparent;
+            border: 1px solid #aaa;
+            color: #ddd;
+            padding: 10px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            outline: none;
+        }
+        .next-btn:hover {
+            border-color: #fff;
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            color: #ddd;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            font-size: 16px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        .back-btn:hover {
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        .loading {
+            color: #ccc;
+            font-size: 16px;
+        }
+        /* 粒子背景 */
+        #particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Publish Button */
+        .publish-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        .publish-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex; /* Hidden by default via inline style */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            color: #fff;
+            text-align: left;
+        }
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: #fff;
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 120px;
+            background: #3d3d3d;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-family: inherit;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .modal-content textarea:focus {
+            border-color: #777;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-actions button {
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .modal-actions button:first-child {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid #555;
+        }
+        .modal-actions button:first-child:hover {
+            color: #fff;
+            border-color: #777;
+        }
+        .modal-actions button.primary {
+            background: #e0e0e0;
+            color: #333;
+            font-weight: 600;
+        }
+        .modal-actions button.primary:hover {
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-image"></div>
+    <div class="bg-overlay"></div>
+    
+    <a href="/" class="back-btn"><i class="ri-arrow-left-line"></i> 返回主页</a>
+    
+    <div class="publish-btn" onclick="showPublishModal()">
+        <i class="ri-add-line"></i> 发布匿名
+    </div>
+
+    <canvas id="particles"></canvas>
+
+    <div class="anonymous-container">
+        <div class="quote-icon"><i class="ri-double-quotes-l"></i></div>
+        <div class="content" id="hole-content">
+            <span class="loading">正在寻找心灵的碎片...</span>
+        </div>
+        <button class="next-btn" onclick="loadRandomHole()">
+            <i class="ri-refresh-line"></i> 换一个
+        </button>
+    </div>
+
+    <!-- Publish Modal -->
+    <div id="publish-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>投递匿名树洞</h3>
+            <textarea id="hole-text" placeholder="在这里写下你的秘密...（不会记录你的身份）"></textarea>
+            <div class="modal-actions">
+                <button onclick="closePublishModal()">取消</button>
+                <button onclick="publishHole()" class="primary">投递</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ... (Existing particle code) ...
+
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        let particlesArray;
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+            update() {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 0.4) - 0.2;
+                let directionY = (Math.random() * 0.4) - 0.2;
+                let color = '#fff';
+
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+        init();
+        animate();
+
+        // 核心逻辑
+        async function loadRandomHole() {
+            const contentEl = document.getElementById('hole-content');
+            contentEl.style.transition = 'opacity 0.3s';
+            contentEl.style.opacity = '0';
+            
+            setTimeout(async () => {
+                try {
+                    const res = await fetch('/anonymous/random');
+                    if (res.ok) {
+                        // Check content type to avoid parsing HTML as JSON if error page returned
+                        const contentType = res.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            const data = await res.json();
+                            if (data && data.content) {
+                                contentEl.textContent = data.content;
+                            } else {
+                                contentEl.textContent = "暂时没有更多秘密...";
+                            }
+                        } else {
+                            // If backend is not ready or returns 404 HTML
+                             contentEl.textContent = "后端服务未准备就绪，请先执行提供的SQL语句...";
+                        }
+                    } else {
+                        contentEl.textContent = "无法连接到树洞深处...";
+                    }
+                } catch (e) {
+                    contentEl.textContent = "网络迷失了方向...";
+                    console.error(e);
+                }
+                contentEl.style.opacity = '1';
+            }, 300);
+        }
+
+        // Load initial
+        loadRandomHole();
+
+        // Publish Modal Functions
+        function showPublishModal() {
+            const modal = document.getElementById('publish-modal');
+            modal.style.display = 'flex';
+            // Force reflow for transition
+            modal.offsetHeight;
+            modal.classList.add('show');
+            document.getElementById('hole-text').focus();
+        }
+
+        function closePublishModal() {
+            const modal = document.getElementById('publish-modal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.getElementById('hole-text').value = '';
+            }, 300);
+        }
+
+        async function publishHole() {
+            const content = document.getElementById('hole-text').value;
+            if (!content || content.trim().length < 5) {
+                alert("再多写一点吧，至少5个字哦~");
+                return;
+            }
+
+            try {
+                const res = await fetch('/anonymous/publish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.status === 'SUCCESS') {
+                        alert("投递成功！");
+                        closePublishModal();
+                        // Optionally reload to show the new one? Nah, random is better.
+                    } else if (result.status === 'NOT_LOGIN') {
+                        if(confirm("需要登录才能发布哦，去登录？")) {
+                            window.location.href = '/login.html';
+                        }
+                    } else {
+                        alert(result.errorMessage || "发布失败");
+                    }
+                } else {
+                    alert("网络开小差了...");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("网络错误");
+            }
+        }
+
+        // Close modal on click outside
+        document.getElementById('publish-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePublishModal();
+            }
+        });
+    </script>
+</body>
+</html>

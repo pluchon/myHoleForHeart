@@ -1,11 +1,10 @@
 package org.example.treehole.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
 import org.example.treehole.entry.Hole;
 import org.example.treehole.entry.LikeMessage;
-import org.example.treehole.entry.LoginAndResisterResult;
+import org.example.treehole.entry.AllExceptionResult;
 import org.example.treehole.enums.loginAndResisterStatus;
 import org.example.treehole.service.HoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,21 +30,21 @@ public class HoleController {
 
     //从session中获取登录的用户Id，如果没有就是0
     @PostMapping("/publish")
-    public LoginAndResisterResult publish(@RequestBody Hole hole, HttpSession session){
+    public AllExceptionResult publish(@RequestBody Hole hole, HttpSession session){
         //通过之前已经存入好的Session获取用户Id
         Object userIdObj = session.getAttribute(Constant.USER_ID);
         // 校验：未登录用户不允许发布
         if (userIdObj == null) {
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
         
         // 校验内容长度
         String content = hole.getContent();
         if (content == null || content.length() < Constant.HOLE_TEXT_MIN_LENGTH) {
-            return LoginAndResisterResult.textInSufficient();
+            return AllExceptionResult.textInSufficient();
         }
         if (content.length() > Constant.HOLE_TEXT_MAX_LENGTH) {
-            return LoginAndResisterResult.textOver();
+            return AllExceptionResult.textOver();
         }
 
         Long userId = (Long) userIdObj;
@@ -56,12 +55,12 @@ public class HoleController {
         //判断是否插入成功
         boolean success = holeService.create(hole);
         if (success) {
-            LoginAndResisterResult result = LoginAndResisterResult.success();
+            AllExceptionResult result = AllExceptionResult.success();
             result.setErrorMessage("发布成功"); // 复用 success 但修改提示语
             return result;
         } else {
             // 发布失败（可能是内容为空）
-            LoginAndResisterResult result = new LoginAndResisterResult();
+            AllExceptionResult result = new AllExceptionResult();
             result.setStatus(loginAndResisterStatus.ILLEGALCHARACTERFORDIGIT); // 借用一个错误状态，或者新建
             result.setErrorMessage("发布失败，内容不能为空");
             return result;

@@ -3,8 +3,10 @@ package org.example.treehole.service;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.ReUtil;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.LoginAndResisterResult;
+import org.example.treehole.entry.AllExceptionResult;
+import org.example.treehole.entry.TopUserDTO;
 import org.example.treehole.entry.User;
+import org.example.treehole.entry.UserFollow;
 import org.example.treehole.enums.loginAndResisterStatus;
 import org.example.treehole.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author pluchon
@@ -26,26 +29,29 @@ public class UserService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private UserFollowService userFollowService;
+
     // 通用校验逻辑
-    public LoginAndResisterResult checkUser(String username, String password) {
+    public AllExceptionResult checkUser(String username, String password) {
         //1. 校验非法字符 (使用 Hutool Validator)
         // 用户名和密码只允许：字母、数字、下划线 (isGeneral)
         if (!Validator.isGeneral(username) || !Validator.isGeneral(password)) {
-            return LoginAndResisterResult.illegalCharacter();
+            return AllExceptionResult.illegalCharacter();
         }
 
         //2. 超过规定长度
         if(username.length() > Constant.MAX_LENGTH || password.length() > Constant.MAX_LENGTH){
-            return LoginAndResisterResult.overLength();
+            return AllExceptionResult.overLength();
         }
 
         //3. 不足规定长度
         if(username.length() < Constant.MIN_LENGTH || password.length() < Constant.MIN_LENGTH){
-            return LoginAndResisterResult.inSufficientLength();
+            return AllExceptionResult.inSufficientLength();
         }
         
         // 校验通过
-        return LoginAndResisterResult.success();
+        return AllExceptionResult.success();
     }
 
     // 校验昵称 (单独的方法，因为昵称允许中文)
@@ -98,6 +104,48 @@ public class UserService {
         return true;
     }
 
+    /**
+     * 获取粉丝榜 Top 10
+     * @param currentUserId 当前登录用户ID (用于判断关注状态)
+     * @return TopUserDTO 列表
+     */
+    public List<TopUserDTO> getTop10Authors(Long currentUserId) {
+        List<TopUserDTO> topUsers = userMapper.selectTop10Authors();
+        
+        if (currentUserId != null && currentUserId > 0) {
+            // 获取当前用户的关注列表
+            List<UserFollow> myFollows = userFollowService.getMyFollows(currentUserId);
+            // 获取当前用户的粉丝列表 (用于判断互相关注)
+            List<UserFollow> myFans = userFollowService.getMyFans(currentUserId);
+            
+            // 构建快速查找集合
+            Set<Long> followingIds = myFollows.stream()
+                    .map(UserFollow::getFollowedId)
+                    .collect(Collectors.toSet());
+            
+            Set<Long> fanIds = myFans.stream()
+                    .map(UserFollow::getFollowerId)
+                    .collect(Collectors.toSet());
+            
+            for (TopUserDTO user : topUsers) {
+                // 不能关注自己
+                if (user.getId().equals(currentUserId)) {
+                    continue;
+                }
+                
+                if (followingIds.contains(user.getId())) {
+                    user.setFollowing(true);
+                    // 如果我也关注了他，且他也在我的粉丝列表里 -> 互相关注
+                    if (fanIds.contains(user.getId())) {
+                        user.setMutual(true);
+                    }
+                }
+            }
+        }
+        
+        return topUsers;
+    }
+
     public User getById(Long userId) {
         return userMapper.queryById(userId);
     }
@@ -112,10 +160,10 @@ public class UserService {
     }
 
     // 综合登录校验逻辑
-    public LoginAndResisterResult loginWithCaptcha(String username, String password, String captcha, String captchaType, 
-                                                   Object storedCaptchaObj, Long storedTime, Integer correctIndex, String targetColor) {
+    public AllExceptionResult loginWithCaptcha(String username, String password, String captcha, String captchaType,
+                                               Object storedCaptchaObj, Long storedTime, Integer correctIndex, String targetColor) {
         // 1. 通用校验
-        LoginAndResisterResult checkResult = checkUser(username, password);
+        AllExceptionResult checkResult = checkUser(username, password);
         if (checkResult.getStatus() != loginAndResisterStatus.SUCCESS) {
             return checkResult;
         }
@@ -123,35 +171,35 @@ public class UserService {
         // 2. 验证码校验
         if ("GALGAME".equals(captchaType)) {
              if (correctIndex == null) {
-                 return LoginAndResisterResult.captchaIllegal();
+                 return AllExceptionResult.captchaIllegal();
              }
              try {
                  int userIndex = Integer.parseInt(captcha);
                  if (userIndex != correctIndex) {
-                      LoginAndResisterResult res = LoginAndResisterResult.captchaError();
+                      AllExceptionResult res = AllExceptionResult.captchaError();
                       res.setErrorMessage("杂鱼，连" + (targetColor!=null?targetColor:"") + "女孩子都分辨不出来了吗");
                       return res;
                  }
              } catch (NumberFormatException e) {
-                 return LoginAndResisterResult.captchaError();
+                 return AllExceptionResult.captchaError();
              }
         } else if ("jigsaw".equals(captchaType)) {
-            if (storedCaptchaObj == null || storedTime == null) return LoginAndResisterResult.captchaIllegal();
+            if (storedCaptchaObj == null || storedTime == null) return AllExceptionResult.captchaIllegal();
             try {
                 int x = Integer.parseInt(captcha); // 用户发送的x偏移量
                 int storedX = Integer.parseInt(storedCaptchaObj.toString());
                 if (Math.abs(x - storedX) > 5) { // 5px误差允许
-                    return LoginAndResisterResult.captchaError();
+                    return AllExceptionResult.captchaError();
                 }
             } catch (Exception e) {
-                return LoginAndResisterResult.captchaError();
+                return AllExceptionResult.captchaError();
             }
         } else if ("textclick".equals(captchaType)) {
-            if (storedCaptchaObj == null || !(storedCaptchaObj instanceof java.util.List)) return LoginAndResisterResult.captchaIllegal();
+            if (storedCaptchaObj == null || !(storedCaptchaObj instanceof java.util.List)) return AllExceptionResult.captchaIllegal();
             try {
                 java.util.List<java.awt.Point> storedPoints = (java.util.List<java.awt.Point>) storedCaptchaObj;
                 String[] userPoints = captcha.split(";");
-                if (userPoints.length != storedPoints.size()) return LoginAndResisterResult.captchaError();
+                if (userPoints.length != storedPoints.size()) return AllExceptionResult.captchaError();
                 
                 for (int i = 0; i < storedPoints.size(); i++) {
                     String[] coords = userPoints[i].split(",");
@@ -160,33 +208,33 @@ public class UserService {
                     java.awt.Point sp = storedPoints.get(i);
                     // 距离校验（半径30px）
                     if (Math.pow(ux - sp.x, 2) + Math.pow(uy - sp.y, 2) > 900) {
-                         return LoginAndResisterResult.captchaError();
+                         return AllExceptionResult.captchaError();
                     }
                 }
             } catch (Exception e) {
-                return LoginAndResisterResult.captchaError();
+                return AllExceptionResult.captchaError();
             }
         } else {
             String storedCaptcha = (storedCaptchaObj instanceof String) ? (String) storedCaptchaObj : null;
             if (!StringUtils.hasLength(captcha) || !StringUtils.hasLength(storedCaptcha) || storedTime == null) {
-                return LoginAndResisterResult.captchaIllegal();
+                return AllExceptionResult.captchaIllegal();
             }
             if (System.currentTimeMillis() - storedTime > Constant.CAPTCHA_EXPIRATION_TIME) {
-                return LoginAndResisterResult.captchaTimeOut();
+                return AllExceptionResult.captchaTimeOut();
             }
             if (!storedCaptcha.equalsIgnoreCase(captcha)) {
-                return LoginAndResisterResult.captchaError();
+                return AllExceptionResult.captchaError();
             }
         }
 
         // 3. 用户登录
         User user = login(username, password);
         if (user == null) {
-            return LoginAndResisterResult.userExists();
+            return AllExceptionResult.userExists();
         }
 
         // 登录成功
-        LoginAndResisterResult success = LoginAndResisterResult.success();
+        AllExceptionResult success = AllExceptionResult.success();
         success.setData(user);
         if ("GALGAME".equals(captchaType)) {
             success.setErrorMessage("提示：你真的是GalGame高手");
@@ -308,19 +356,19 @@ public class UserService {
     }
 
     // 修改密码逻辑
-    public LoginAndResisterResult updatePassword(Long userId, String oldPassword, String newPassword) {
+    public AllExceptionResult updatePassword(Long userId, String oldPassword, String newPassword) {
         if (!StringUtils.hasLength(oldPassword) || !StringUtils.hasLength(newPassword)) {
-            return LoginAndResisterResult.digit(); // 简单复用参数错误的返回
+            return AllExceptionResult.digit(); // 简单复用参数错误的返回
         }
 
         User user = getById(userId);
         if (user == null) {
-            return LoginAndResisterResult.userExists(); // 复用用户错误
+            return AllExceptionResult.userExists(); // 复用用户错误
         }
 
         // 验证旧密码
         if (!user.getPassword().equals(oldPassword)) {
-            LoginAndResisterResult result = new LoginAndResisterResult();
+            AllExceptionResult result = new AllExceptionResult();
             result.setStatus(loginAndResisterStatus.PASSWORDERROR);
             result.setErrorMessage("旧密码错误");
             return result;
@@ -328,13 +376,13 @@ public class UserService {
 
         // 验证新密码格式
         //复用 checkUser 逻辑，传入 username 作为占位符
-        LoginAndResisterResult checkResult = checkUser("username", newPassword);
+        AllExceptionResult checkResult = checkUser("username", newPassword);
         if (checkResult.getStatus() != loginAndResisterStatus.SUCCESS) {
             return checkResult;
         }
 
         // 修改密码
         userMapper.updatePassword(userId, newPassword);
-        return LoginAndResisterResult.success();
+        return AllExceptionResult.success();
     }
 }

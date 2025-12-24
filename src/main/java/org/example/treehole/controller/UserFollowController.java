@@ -2,10 +2,8 @@ package org.example.treehole.controller;
 
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.LoginAndResisterResult;
-import org.example.treehole.entry.User;
+import org.example.treehole.entry.AllExceptionResult;
 import org.example.treehole.entry.UserFollow;
-import org.example.treehole.enums.loginAndResisterStatus;
 import org.example.treehole.service.UserFollowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -33,22 +31,22 @@ public class UserFollowController {
      * @return LoginAndResisterResult
      */
     @PostMapping("/toggle")
-    public LoginAndResisterResult toggleFollow(@RequestParam Long followedId, HttpSession session) {
+    public AllExceptionResult toggleFollow(@RequestParam Long followedId, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         
         // 登录校验
         if (userId == null) {
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
         
         // 自我关注校验
         if (userId.equals(followedId)) {
-            return LoginAndResisterResult.followMyself();
+            return AllExceptionResult.followMyself();
         }
 
         try {
             boolean isFollowing = userFollowService.toggleFollow(userId, followedId);
-            LoginAndResisterResult result = LoginAndResisterResult.success();
+            AllExceptionResult result = AllExceptionResult.success();
             result.setErrorMessage(isFollowing ? "关注成功" : "已取消关注");
             
             Map<String, Object> data = new HashMap<>();
@@ -58,7 +56,7 @@ public class UserFollowController {
             return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return LoginAndResisterResult.followOpFailed("操作失败: " + e.getMessage());
+            return AllExceptionResult.followOpFailed("操作失败: " + e.getMessage());
         }
     }
 
@@ -69,22 +67,22 @@ public class UserFollowController {
      * @return LoginAndResisterResult
      */
     @PostMapping("/toggleSpecial")
-    public LoginAndResisterResult toggleSpecial(@RequestParam Long followedId, HttpSession session) {
+    public AllExceptionResult toggleSpecial(@RequestParam Long followedId, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         
         if (userId == null) {
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
         
         // 检查是否已关注
         UserFollow uf = userFollowService.getFollowStatus(userId, followedId);
         if (uf == null) {
-            return LoginAndResisterResult.notFollowed();
+            return AllExceptionResult.notFollowed();
         }
 
         try {
             boolean isSpecial = userFollowService.toggleSpecial(userId, followedId);
-            LoginAndResisterResult result = LoginAndResisterResult.success();
+            AllExceptionResult result = AllExceptionResult.success();
             result.setErrorMessage(isSpecial ? "已设为特别关注" : "已取消特别关注");
             
             Map<String, Object> data = new HashMap<>();
@@ -94,7 +92,7 @@ public class UserFollowController {
             return result;
         } catch (Exception e) {
             e.printStackTrace();
-            return LoginAndResisterResult.followOpFailed("操作失败: " + e.getMessage());
+            return AllExceptionResult.followOpFailed("操作失败: " + e.getMessage());
         }
     }
 
@@ -113,13 +111,27 @@ public class UserFollowController {
     }
 
     /**
+     * 获取我的粉丝列表 (GET /follow/my-fans)
+     * @param session 当前会话
+     * @return 粉丝列表
+     */
+    @GetMapping("/my-fans")
+    public List<UserFollow> getMyFans(HttpSession session) {
+        Long userId = (Long) session.getAttribute(Constant.USER_ID);
+        if (userId == null) {
+            return new ArrayList<>();
+        }
+        return userFollowService.getMyFans(userId);
+    }
+
+    /**
      * 获取对某用户的关注状态 (GET /follow/status)
      * @param followedId 目标用户ID
      * @param session 当前会话
      * @return LoginAndResisterResult
      */
     @GetMapping("/status")
-    public LoginAndResisterResult getStatus(@RequestParam Long followedId, HttpSession session) {
+    public AllExceptionResult getStatus(@RequestParam Long followedId, HttpSession session) {
         Long userId = (Long) session.getAttribute(Constant.USER_ID);
         Map<String, Object> data = new HashMap<>();
         
@@ -132,7 +144,7 @@ public class UserFollowController {
             data.put("isSpecial", uf != null && uf.getIsSpecial() == 1);
         }
         
-        LoginAndResisterResult result = LoginAndResisterResult.success();
+        AllExceptionResult result = AllExceptionResult.success();
         result.setData(data);
         return result;
     }

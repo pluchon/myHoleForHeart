@@ -137,6 +137,7 @@ async function selectUser(userId, nickname, avatar, el) {
                  onclick="showTargetUserHoles(${userId}, '${nickname}')" 
                  title="查看TA的树洞">
             <span>${nickname}</span>
+            <span id="chat-header-follow-${userId}" style="margin-left: 10px;"></span>
         </div>
         <div class="tool-btn" onclick="toggleBgSettings(event)" title="背景设置" style="font-size: 20px; margin-left: auto;">
             <i class="ri-settings-3-line"></i>
@@ -146,9 +147,88 @@ async function selectUser(userId, nickname, avatar, el) {
     // Show Input
     document.getElementById('input-area').style.display = 'block';
     
+    // Load Follow Status
+    loadChatFollowStatus(userId);
+    
     // Load History
     await loadHistory(userId);
 }
+
+// 复用 script.js 的逻辑，但因为在 message.js，需要重新实现或确保 script.js 被引入
+// message.html 引入了 message.js，没有引入 script.js。
+// 为了避免代码重复，最好引入 script.js 中的公共函数。但 script.js 包含大量初始化代码。
+// 所以我们在 message.js 中简单实现一下。
+
+async function loadChatFollowStatus(userId) {
+    const container = document.getElementById(`chat-header-follow-${userId}`);
+    if (!container) return;
+    
+    try {
+        const res = await fetch(`/follow/status?followedId=${userId}`);
+        const result = await res.json();
+        
+        if (result.status !== 'SUCCESS') {
+             return;
+        }
+
+        const isFollowing = result.data ? result.data.isFollowing : false;
+        
+        // Check mutual
+        let isMutual = false;
+        if (isFollowing) {
+             try {
+                 const fansRes = await fetch('/follow/my-fans');
+                 if(fansRes.ok) {
+                     const fans = await fansRes.json();
+                     isMutual = fans.some(f => f.followerId === userId);
+                 }
+             } catch(ignore){}
+        }
+
+        let html = '';
+        if (isFollowing) {
+            if (isMutual) {
+                 html += `
+                    <button onclick="toggleChatFollow(${userId}, this)" style="background:#f6f8fa;color:#1e7e34;border:1px solid #1e7e34; padding: 2px 8px; font-size: 12px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <i class="ri-arrow-left-right-line"></i> 互相关注
+                    </button>
+                `;
+            } else {
+                 html += `
+                    <button onclick="toggleChatFollow(${userId}, this)" style="background:#f6f8fa;color:#24292f;border:1px solid #d0d7de; padding: 2px 8px; font-size: 12px; height: 24px; border-radius: 4px; cursor: pointer;">
+                        已关注
+                    </button>
+                `;
+            }
+        } else {
+            html += `
+                <button onclick="toggleChatFollow(${userId}, this)" style="background:#0969da;color:white;border:1px solid transparent; padding: 2px 8px; font-size: 12px; height: 24px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    <i class="ri-add-line"></i> 关注
+                </button>
+            `;
+        }
+        container.innerHTML = html;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function toggleChatFollow(userId, btn) {
+    try {
+        const res = await fetch(`/follow/toggle?followedId=${userId}`, { method: 'POST' });
+        const result = await res.json();
+        
+        if (result.status === 'SUCCESS') {
+            // Refresh status
+            loadChatFollowStatus(userId);
+        } else {
+            alert(result.errorMessage || "操作失败");
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 
 async function loadHistory(userId) {
     const container = document.getElementById('message-list');

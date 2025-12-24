@@ -211,7 +211,7 @@ function showTimeCapsuleModal() {
             dateFormat: "Y-m-d H:i",
             minDate: "today",
             locale: "zh",
-            disableMobile: "true"
+            disableMobile: true
         });
     }
     
@@ -463,13 +463,108 @@ async function loadNotifications_legacy() {
 }
 
 // 初始化
-function init() {
-    checkLoginStatus();
+async function init() {
+    await checkLoginStatus();
     // 初始化背景和主题，传入 false 防止二次加载 (因为 onCategoryChange 内部现在会调用 loadHoles)
     onCategoryChange(false);
     // 初始加载一次 (或者让 onCategoryChange(true) 来做)
     // 既然 onCategoryChange 负责根据分类加载，那我们就让它来加载
     loadHoles(true);
+    
+    // 加载 Top 10 洞主
+    loadTop10Authors();
+}
+
+// 加载 Top 10 洞主列表
+async function loadTop10Authors() {
+    const list = document.getElementById('top-users-list');
+    if (!list) return;
+
+    try {
+        const res = await fetch('/user/top10');
+        if (res.ok) {
+            const users = await res.json();
+            if (!users || users.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无数据</div>';
+                return;
+            }
+
+            let html = '<div class="top-10-list">';
+            users.forEach((user, index) => {
+                const rank = index + 1;
+                let badgeClass = 'simple';
+                // 奖杯图标
+                let rankIcon = `<span style="font-weight:600; color:#999; width:20px; text-align:center; display:inline-block;">${rank}</span>`;
+                
+                if (rank <= 3) {
+                    badgeClass = ''; // orange style for top 3
+                    if (rank === 1) rankIcon = '<i class="ri-trophy-fill" style="color:#ffec3d; font-size:16px;"></i>';
+                    else if (rank === 2) rankIcon = '<i class="ri-trophy-fill" style="color:#d9d9d9; font-size:16px;"></i>'; // silver
+                    else if (rank === 3) rankIcon = '<i class="ri-trophy-fill" style="color:#d48806; font-size:16px;"></i>'; // bronze
+                }
+
+                // 关注按钮逻辑
+                let btnHtml = '';
+                // 兼容 boolean 序列化字段名 (isFollowing -> following)
+                const isFollowing = user.following !== undefined ? user.following : user.isFollowing;
+                const isMutual = user.mutual !== undefined ? user.mutual : user.isMutual;
+
+                // 如果是自己，不显示关注按钮
+                if (currentUser && currentUser.id === user.id) {
+                    btnHtml = '<span style="font-size:12px; color:#999;">你自己</span>';
+                } else {
+                    if (isMutual) {
+                        btnHtml = `
+                            <button class="t10-star-btn active" onclick="event.stopPropagation(); toggleFollow(${user.id}, this)" title="取消关注" style="color: #52c41a; border-color: #b7eb8f; background: #f6ffed;">
+                                <i class="ri-arrow-left-right-line"></i> 互相关注
+                            </button>
+                        `;
+                    } else if (isFollowing) {
+                        btnHtml = `
+                            <button class="t10-star-btn active" onclick="event.stopPropagation(); toggleFollow(${user.id}, this)" title="取消关注">
+                                <i class="ri-check-line"></i> 已关注
+                            </button>
+                        `;
+                    } else {
+                        btnHtml = `
+                            <button class="t10-star-btn" onclick="event.stopPropagation(); toggleFollow(${user.id}, this)" title="关注TA">
+                                <i class="ri-add-line"></i> 关注
+                            </button>
+                        `;
+                    }
+                }
+
+                html += `
+                    <div class="t10-card" onclick="showTargetUserHoles(${user.id}, '${escapeHtml(user.nickname)}', true)">
+                        <div class="t10-header">
+                            <div class="t10-badge ${badgeClass}">
+                                ${rankIcon}
+                                <span style="margin-left: 4px;">Top ${rank}</span>
+                            </div>
+                            ${btnHtml}
+                        </div>
+                        <div class="t10-user">
+                            <img src="${user.avatar || '/picture/user-default.png'}" class="user-avatar-img" style="width:24px; height:24px; margin-right: 8px;">
+                            <span class="t10-username">${escapeHtml(user.nickname)}</span>
+                            ${rank <= 3 ? '<i class="ri-verified-badge-fill verified-icon" style="margin-left:4px;"></i>' : ''}
+                        </div>
+                        <div class="t10-footer" style="margin-top: 8px;">
+                            <span class="t10-cat"><i class="ri-user-heart-line"></i> 粉丝</span>
+                            <span class="t10-sep">·</span>
+                            <span class="t10-time" style="font-weight: 600; color: var(--text-color);">${user.fansCount || 0}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            list.innerHTML = html;
+        } else {
+            list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">加载失败</div>';
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">网络错误</div>';
+    }
 }
 
 // 重置回首页默认状态
@@ -897,6 +992,8 @@ function switchUcTab(tab) {
     document.getElementById('my-holes-list').style.display = 'none';
     document.getElementById('my-favorites-list').style.display = 'none';
     document.getElementById('my-follows-list').style.display = 'none';
+    const fansList = document.getElementById('my-fans-list');
+    if(fansList) fansList.style.display = 'none';
     
     if (tab === 'my-holes') {
         const tabBtn = document.getElementById('tab-my-holes');
@@ -913,6 +1010,11 @@ function switchUcTab(tab) {
         if(tabBtn) tabBtn.classList.add('active');
         document.getElementById('my-follows-list').style.display = 'block';
         loadMyFollows();
+    } else if (tab === 'my-fans') {
+        const tabBtn = document.getElementById('tab-my-fans');
+        if(tabBtn) tabBtn.classList.add('active');
+        if(fansList) fansList.style.display = 'block';
+        loadMyFans();
     }
 }
 
@@ -1623,25 +1725,39 @@ async function toggleFavorite(id, element) {
     if (!btn || !btn.classList) return;
     
     // 如果点击的是图标内部，向上找按钮
-    if (!btn.classList.contains('gitcode-fav-btn')) {
-        btn = btn.closest('.gitcode-fav-btn');
+    // Support Top 10 star btn
+    if (!btn.classList.contains('gitcode-fav-btn') && !btn.classList.contains('t10-star-btn')) {
+        btn = btn.closest('.gitcode-fav-btn') || btn.closest('.t10-star-btn');
     }
     if (!btn) return;
 
-    const isFavorited = btn.classList.contains('favorited');
-    const iconWrapper = btn.querySelector('.fav-icon-wrapper');
+    const isTop10 = btn.classList.contains('t10-star-btn');
+    const isFavorited = btn.classList.contains('favorited') || (isTop10 && btn.classList.contains('active'));
+    
+    // Top 10 uses .star-wrapper, others use .fav-icon-wrapper
+    const iconWrapper = isTop10 ? btn.querySelector('.star-wrapper') : btn.querySelector('.fav-icon-wrapper');
 
     // 乐观更新
     if (isFavorited) {
         // Un-favorite
         btn.classList.remove('favorited');
-        btn.title = '收藏';
-        if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-line"></i>';
+        if (isTop10) {
+            btn.classList.remove('active');
+            if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-star-line"></i> Star';
+        } else {
+            btn.title = '收藏';
+            if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-line"></i>';
+        }
     } else {
         // Favorite
         btn.classList.add('favorited');
-        btn.title = '取消收藏';
-        if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-fill"></i>';
+        if (isTop10) {
+            btn.classList.add('active');
+            if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-star-fill"></i> Unstar';
+        } else {
+            btn.title = '取消收藏';
+            if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-fill"></i>';
+        }
         
         // 动画
         const icon = iconWrapper ? iconWrapper.querySelector('i') : null;
@@ -1670,10 +1786,20 @@ async function toggleFavorite(id, element) {
             // 状态不一致，强制同步
              if (result) {
                 btn.classList.add('favorited');
-                if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-fill"></i>';
+                if (isTop10) {
+                    btn.classList.add('active');
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-star-fill"></i> Unstar';
+                } else {
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-fill"></i>';
+                }
             } else {
                 btn.classList.remove('favorited');
-                if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-line"></i>';
+                if (isTop10) {
+                    btn.classList.remove('active');
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-star-line"></i> Star';
+                } else {
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-line"></i>';
+                }
             }
         }
     } catch (e) {
@@ -1682,10 +1808,20 @@ async function toggleFavorite(id, element) {
             // 回滚
             if (isFavorited) {
                 btn.classList.add('favorited');
-                if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-fill"></i>';
+                if (isTop10) {
+                    btn.classList.add('active');
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-star-fill"></i> Unstar';
+                } else {
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-fill"></i>';
+                }
             } else {
                 btn.classList.remove('favorited');
-                if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-line"></i>';
+                if (isTop10) {
+                    btn.classList.remove('active');
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-star-line"></i> Star';
+                } else {
+                    if (iconWrapper) iconWrapper.innerHTML = '<i class="ri-bookmark-line"></i>';
+                }
             }
         }
     }
@@ -1732,14 +1868,16 @@ function showUserCard(userId, element, nickname, avatar) {
         <div class="user-card-header">
             ${avatarImg}
             <div class="user-card-info">
-                <div class="user-card-name">${nickname}</div>
+                <div class="user-card-name" style="display:flex;align-items:center;">
+                    ${nickname}
+                    <span id="uc-header-follow-${userId}" style="margin-left:10px;"></span>
+                </div>
                 <div class="user-card-id">ID: ${userId}</div>
             </div>
         </div>
         <div class="user-card-actions" style="gap:8px; flex-wrap: wrap;">
-            <div id="uc-follow-area-${userId}" style="display:flex; gap:8px;">
-                <!-- Follow buttons will be loaded here -->
-                <button class="dm-btn" disabled>加载中...</button>
+            <div id="uc-follow-area-${userId}" style="display:none;">
+                <!-- Moved to header, keeping this hidden for compatibility or removing if safe -->
             </div>
             <button class="dm-btn" title="发送私信" onclick="toggleDmInput()">
                 <i class="ri-mail-send-line"></i> 快捷私信
@@ -1788,7 +1926,11 @@ function showUserCard(userId, element, nickname, avatar) {
 }
 
 async function loadFollowStatusInCard(userId) {
-    const container = document.getElementById(`uc-follow-area-${userId}`);
+    // 优先使用 Header 里的容器
+    let container = document.getElementById(`uc-header-follow-${userId}`);
+    // 如果 Header 里没有（比如旧版或者其他情况），尝试用旧的 area
+    if (!container) container = document.getElementById(`uc-follow-area-${userId}`);
+    
     if (!container) return;
     
     try {
@@ -1802,24 +1944,75 @@ async function loadFollowStatusInCard(userId) {
 
         const isFollowing = result.data ? result.data.isFollowing : false;
         const isSpecial = result.data ? result.data.isSpecial : false;
+        // 尝试获取互相关注状态（后端 status 接口可能没返回 isMutual，需要确认）
+        // 如果 /follow/status 没返回 isMutual，我们可能需要单独判断或者后端补充。
+        // 暂时假设后端 /follow/status 只返回了 isFollowing/isSpecial。
+        // 为了实现"互相关注"显示，我们可以尝试通过 /follow/my-fans 列表里查找（效率低），或者最好后端 /follow/status 返回 isMutual。
+        // 这里先检查 result.data 是否包含 isMutual (之前看 Controller 代码似乎没显式 put "isMutual")
+        // 如果没有，暂时只显示"已关注"。
+        // 补充：查看 Controller 代码，getStatus 只 put 了 isFollowing 和 isSpecial。
+        // 为了支持互相关注显示，最好修改后端或前端做额外请求。
+        // 但用户要求"如果是互相关注则会显示互相关注"，我们可以在这里请求 my-fans 列表校验，或者最好改后端。
+        // 鉴于我不能改后端（用户说"后端似乎已经实现了"），我再次确认 Controller。
+        // UserFollowController.getStatus:
+        // Map<String, Object> data = new HashMap<>();
+        // UserFollow uf = userFollowService.getFollowStatus(userId, followedId);
+        // data.put("isFollowing", uf != null);
+        // data.put("isSpecial", uf != null && uf.getIsSpecial() == 1);
+        // 确实没有 isMutual。
+        // 但 UserFollowService.getFollowStatus 返回 UserFollow 对象吗？
+        // Mapper.selectOne 返回 UserFollow。
+        // UserFollow 对象里好像没有 isMutual 字段 populated by selectOne (select * from user_follow)。
+        // 互相关注需要查反向记录。
+        // 既然不能改后端（或者尽量不改），我可以用前端笨办法：
+        // 既然这里已经是异步了，我可以再 fetch 一次 /follow/my-fans 看看这个 userId 在不在里面？
+        // 或者，我们可以假设用户说"后端似乎已经实现了"是指粉丝列表那个实现了。
+        // 这里为了满足需求，我必须知道是不是互相关注。
+        // 让我先用普通关注逻辑，如果需要互相关注，我可以在这里 fetch check。
         
-        let html = '';
+        let isMutual = false;
         if (isFollowing) {
-            html += `
-                <button class="dm-btn uc-follow-btn following" onclick="toggleFollow(${userId}, this)" style="background:#f6f8fa;color:#24292f;border:1px solid #d0d7de;">
-                    取消关注
-                </button>
-                <button class="dm-btn btn-special ${isSpecial ? 'active' : ''}" onclick="toggleSpecial(${userId}, this)" title="${isSpecial ? '取消特别关注' : '设为特别关注'}">
-                    <i class="${isSpecial ? 'ri-star-fill' : 'ri-star-line'}"></i>
+             // 只有已关注才可能是互相关注
+             // 检查对方是否也关注了我（即对方在我的粉丝列表中）
+             // 这是一个额外的请求，可能会慢一点，但在用户卡片里可以接受
+             try {
+                 const fansRes = await fetch('/follow/my-fans');
+                 if(fansRes.ok) {
+                     const fans = await fansRes.json();
+                     isMutual = fans.some(f => f.followerId === userId);
+                 }
+             } catch(ignore){}
+        }
+
+        let html = '<div style="display:flex;align-items:center;gap:1px;">';
+        if (isFollowing) {
+            if (isMutual) {
+                 html += `
+                    <button class="dm-btn uc-follow-btn following" onclick="toggleFollow(${userId}, this)" style="background:#f6f8fa;color:#1e7e34;border:1px solid #1e7e34; padding: 0 10px; font-size: 12px; height: 26px; border-radius: 13px; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
+                        <i class="ri-arrow-left-right-line"></i> 互相关注
+                    </button>
+                `;
+            } else {
+                 html += `
+                    <button class="dm-btn uc-follow-btn following" onclick="toggleFollow(${userId}, this)" style="background:#f6f8fa;color:#24292f;border:1px solid #d0d7de; padding: 0 10px; font-size: 12px; height: 26px; border-radius: 13px; transition:all 0.2s;">
+                        已关注
+                    </button>
+                `;
+            }
+            // 特别关注按钮
+             html += `
+                <button class="dm-btn btn-special ${isSpecial ? 'active' : ''}" onclick="toggleSpecial(${userId}, this)" title="${isSpecial ? '取消特别关注' : '设为特别关注'}" style="padding: 0 8px; height: 26px; border-radius: 13px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+                    <i class="${isSpecial ? 'ri-star-fill' : 'ri-star-line'}" style="font-size: 14px;"></i>
                 </button>
             `;
         } else {
             html += `
-                <button class="dm-btn uc-follow-btn" onclick="toggleFollow(${userId}, this)" style="background:#0969da;color:white;border:1px solid transparent;">
-                    关注
+                <button class="dm-btn uc-follow-btn" onclick="toggleFollow(${userId}, this)" style="background:#0969da;color:white;border:1px solid transparent; padding: 0 12px; font-size: 12px; height: 26px; border-radius: 13px; display:flex; align-items:center; gap:4px; transition:all 0.2s;">
+                    <i class="ri-add-line"></i> 关注
                 </button>
             `;
         }
+        html += '</div>';
         container.innerHTML = html;
     } catch (e) {
         console.error(e);
@@ -1840,6 +2033,16 @@ async function toggleFollow(userId, btn) {
             const list = document.getElementById('my-follows-list');
             if(list && list.style.display !== 'none') {
                 loadMyFollows();
+            }
+            const fansList = document.getElementById('my-fans-list');
+            if(fansList && fansList.style.display !== 'none') {
+                loadMyFans();
+            }
+            // 刷新 Top 10 洞主列表状态
+            const topUsersList = document.getElementById('top-users-list');
+            if(topUsersList) {
+                // 简单起见，直接重新加载整个列表以更新状态
+                loadTop10Authors();
             }
         } else {
             showToast(result.errorMessage || "操作失败", 'error');
@@ -1930,6 +2133,77 @@ async function loadMyFollows() {
     }
 }
 
+async function loadMyFans() {
+    const list = document.getElementById('my-fans-list');
+    if (!list) return;
+    
+    list.innerHTML = '<div class="empty-tip">加载中...</div>';
+    
+    try {
+        const res = await fetch('/follow/my-fans');
+        if (res.ok) {
+            const fans = await res.json();
+            if (!fans || fans.length === 0) {
+                list.innerHTML = '<div class="empty-tip">暂无粉丝</div>';
+                return;
+            }
+            
+            let html = '<div class="follow-list">';
+            fans.forEach(f => {
+                const nickname = escapeHtml(f.followerNickname || '用户');
+                const avatar = f.followerAvatar || '';
+                const avatarImg = avatar ? `<img src="${avatar}" class="follow-avatar">` : `<div class="follow-avatar" style="background:#f0f2f5;display:flex;align-items:center;justify-content:center;"><i class="ri-user-line" style="color:#999"></i></div>`;
+                
+                // 兼容 boolean 序列化字段名 (isMutual 或 mutual)
+                const isMutual = (f.mutual !== undefined) ? f.mutual : (f.isMutual === true);
+                
+                const mutualBadge = isMutual ? `<span class="follow-special-badge" style="background:#e6f4ea;color:#1e7e34;"><i class="ri-arrow-left-right-line" style="font-size:10px;"></i> 互相关注</span>` : '';
+                
+                // 按钮状态：互相关注 -> 显示"互相关注"（点击可取关），未互相关注 -> 显示"回粉"
+                let btnHtml = '';
+                if (isMutual) {
+                    btnHtml = `
+                        <button class="btn-follow following" onclick="toggleFollow(${f.followerId}, this)" title="点击取消关注">
+                            互相关注
+                        </button>
+                    `;
+                } else {
+                    btnHtml = `
+                        <button class="btn-follow" onclick="toggleFollow(${f.followerId}, this)" title="点击回粉">
+                            回粉
+                        </button>
+                    `;
+                }
+
+                html += `
+                    <div class="follow-item">
+                        <div class="follow-user-info" onclick="showUserCard(${f.followerId}, this, '${nickname}', '${f.followerAvatar || ''}')">
+                            ${avatarImg}
+                            <div class="follow-details">
+                                <div class="follow-name">
+                                    ${nickname}
+                                    ${mutualBadge}
+                                </div>
+                                <div style="font-size:12px;color:#888;">ID: ${f.followerId}</div>
+                            </div>
+                        </div>
+                        <div class="follow-actions">
+                            ${btnHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            list.innerHTML = html;
+        } else {
+            list.innerHTML = '<div class="empty-tip">加载失败</div>';
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<div class="empty-tip">网络错误</div>';
+    }
+}
+
 async function loadUserCardHoles(userId) {
     const containerId = `user-card-holes-${userId}`;
     const container = document.getElementById(containerId);
@@ -1947,12 +2221,36 @@ async function loadUserCardHoles(userId) {
             // 只显示最近5条
             holes.slice(0, 5).forEach(h => {
                 const date = new Date(h.createTime).toLocaleDateString();
+                const contentLimit = 50;
+                let contentHtml = '';
+                let expandBtn = '';
+                
+                if (h.content.length > contentLimit) {
+                    const truncated = h.content.substring(0, contentLimit) + '...';
+                    contentHtml = `
+                        <div class="mini-hole-content-wrapper">
+                             <div class="content-short" style="word-break: break-all;">${truncated}</div>
+                             <div class="content-full" style="display:none; word-break: break-all;">${h.content}</div>
+                        </div>
+                    `;
+                    expandBtn = `<button class="expand-btn" onclick="toggleHoleContent(this)" style="border:none;background:none;color:#1890ff;cursor:pointer;font-size:12px;padding:0;margin-top:4px;">展开</button>`;
+                } else {
+                    contentHtml = `<div class="mini-hole-content" style="word-break: break-all;">${h.content}</div>`;
+                }
+
+                const likeClass = h.isLiked ? 'ri-heart-fill' : 'ri-heart-line';
+                const likeColor = h.isLiked ? '#ff7675' : '';
+                const likeBtnClass = h.isLiked ? 'like-btn liked' : 'like-btn';
+
                 html += `
-                    <div class="mini-hole-item">
-                        <div class="mini-hole-content">${h.content}</div>
-                        <div class="mini-hole-meta">
+                    <div class="mini-hole-item" style="padding: 10px; border-bottom: 1px solid #eee;">
+                        ${contentHtml}
+                        ${expandBtn}
+                        <div class="mini-hole-meta" style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#999;">
                             <span>${date}</span>
-                            <span>❤️ ${h.likeCount}</span>
+                            <button class="${likeBtnClass}" onclick="toggleUserCardHoleLike(this, ${h.id})" style="border:none;background:none;cursor:pointer;display:flex;align-items:center;gap:4px;color:${likeColor}">
+                                <i class="${likeClass}"></i> <span class="count">${h.likeCount || 0}</span>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -1964,6 +2262,54 @@ async function loadUserCardHoles(userId) {
     } catch(e) {
         console.error(e);
         container.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">网络错误</div>';
+    }
+}
+
+function toggleHoleContent(btn) {
+    const wrapper = btn.previousElementSibling;
+    const shortDiv = wrapper.querySelector('.content-short');
+    const fullDiv = wrapper.querySelector('.content-full');
+    
+    if (fullDiv.style.display === 'none') {
+        fullDiv.style.display = 'block';
+        shortDiv.style.display = 'none';
+        btn.innerText = '收起';
+    } else {
+        fullDiv.style.display = 'none';
+        shortDiv.style.display = 'block';
+        btn.innerText = '展开';
+    }
+}
+
+async function toggleUserCardHoleLike(btn, holeId) {
+    // 防止重复点击
+    if (btn.disabled) return;
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`/hole/like?id=${holeId}`);
+        if (res.ok) {
+            const isLiked = await res.json();
+            const icon = btn.querySelector('i');
+            const countSpan = btn.querySelector('.count');
+            let count = parseInt(countSpan.innerText);
+
+            if (isLiked) {
+                btn.classList.add('liked');
+                icon.className = 'ri-heart-fill';
+                btn.style.color = '#ff7675';
+                countSpan.innerText = count + 1;
+            } else {
+                btn.classList.remove('liked');
+                icon.className = 'ri-heart-line';
+                btn.style.color = '';
+                countSpan.innerText = Math.max(0, count - 1);
+            }
+        }
+    } catch (e) {
+        console.error('Like failed', e);
+    } finally {
+        btn.disabled = false;
     }
 }
 
@@ -2214,11 +2560,11 @@ async function loadTop10() {
                     `;
                 }
 
-                // Star 按钮状态
-                const isLiked = hole.isLiked;
-                const starIcon = isLiked ? 'ri-star-fill' : 'ri-star-line';
-                const starText = isLiked ? 'Unstar' : 'Star';
-                const starClass = isLiked ? 'active' : '';
+                // Star 按钮状态 (改为收藏逻辑)
+                const isFavorited = hole.isFavorited;
+                const starIcon = isFavorited ? 'ri-star-fill' : 'ri-star-line';
+                const starText = isFavorited ? 'Unstar' : 'Star';
+                const starClass = isFavorited ? 'active' : '';
 
                 // 点击卡片调用 showUserCard 显示用户/私信卡片
                 // 注意：需要转义字符串参数
@@ -2233,7 +2579,7 @@ async function loadTop10() {
                                 <span class="t10-username">${nickname}</span>
                                 <i class="ri-verified-badge-fill verified-icon"></i>
                             </div>
-                            <button class="t10-star-btn ${starClass}" onclick="event.stopPropagation(); likeHole(${hole.id}, this.querySelector('.star-wrapper'))">
+                            <button class="t10-star-btn ${starClass}" onclick="event.stopPropagation(); toggleFavorite(${hole.id}, this)">
                                 <span class="star-wrapper" style="display:flex;align-items:center;gap:4px;">
                                     <i class="${starIcon}"></i> ${starText}
                                 </span>

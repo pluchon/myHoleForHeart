@@ -65,6 +65,15 @@ public class UserFollowService {
     }
     
     /**
+     * 获取指定用户的粉丝列表
+     * @param userId 用户ID
+     * @return 粉丝列表
+     */
+    public List<UserFollow> getMyFans(Long userId) {
+        return userFollowMapper.selectFansByUserId(userId);
+    }
+    
+    /**
      * 检查关注状态
      * @param followerId 关注者ID
      * @param followedId 被关注者ID

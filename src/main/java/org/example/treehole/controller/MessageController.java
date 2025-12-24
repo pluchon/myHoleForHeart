@@ -2,7 +2,7 @@ package org.example.treehole.controller;
 
 import jakarta.servlet.http.HttpSession;
 import org.example.treehole.Constant;
-import org.example.treehole.entry.LoginAndResisterResult;
+import org.example.treehole.entry.AllExceptionResult;
 import org.example.treehole.entry.Message;
 import org.example.treehole.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,24 +31,24 @@ public class MessageController {
 
     //发送私信，返回是否发送成功
     @RequestMapping("/send")
-    public LoginAndResisterResult send(Long receiveId, String content, HttpSession session){
+    public AllExceptionResult send(Long receiveId, String content, HttpSession session){
         Long senderId = (Long)session.getAttribute(Constant.USER_ID);
         if(senderId == null){
             //未登录
-            return LoginAndResisterResult.notLogin();
+            return AllExceptionResult.notLogin();
         }
         //如果是自己给自己发私信，就不可以
         if(Objects.equals(receiveId, senderId)){
-            return LoginAndResisterResult.sendMessageByMyself();
+            return AllExceptionResult.sendMessageByMyself();
         }
         //检查内容长度
         if(content.length() < Constant.MESSAGE_MIN_LENGTH){
             //字数太少了
-            return LoginAndResisterResult.textInSufficient();
+            return AllExceptionResult.textInSufficient();
         }
         if(content.length() > Constant.MESSAGE_MAX_LENGTH){
             //字数太多了
-            return LoginAndResisterResult.textOver();
+            return AllExceptionResult.textOver();
         }
         //接下来才是真正的发送成功
         Message message = new Message();
@@ -57,9 +57,9 @@ public class MessageController {
         message.setContent(content);
         boolean success = messageService.send(message);
         if(success){
-            return LoginAndResisterResult.success();
+            return AllExceptionResult.success();
         }
-        return LoginAndResisterResult.textInSufficient(); // 发送失败暂且用这个或者通用错误
+        return AllExceptionResult.textInSufficient(); // 发送失败暂且用这个或者通用错误
     }
 
     @RequestMapping("/conversations")

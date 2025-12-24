@@ -4,7 +4,10 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.example.treehole.entry.TopUserDTO;
 import org.example.treehole.entry.User;
+
+import java.util.List;
 
 /**
  * @author pluchon
@@ -32,4 +35,16 @@ public interface UserMapper {
     // 修改密码
     @Update("update user set password = #{password} where id = #{id}")
     void updatePassword(Long id, String password);
+
+    /**
+     * 获取粉丝数最多的前10名用户
+     * @return 用户列表（包含粉丝数）
+     */
+    @Select("SELECT u.id, u.nickname, u.avatar, COUNT(f.id) as fansCount " +
+            "FROM user u " +
+            "LEFT JOIN user_follow f ON u.id = f.followed_id " +
+            "GROUP BY u.id " +
+            "ORDER BY fansCount DESC, u.id ASC " +
+            "LIMIT 10")
+    List<TopUserDTO> selectTop10Authors();
 }

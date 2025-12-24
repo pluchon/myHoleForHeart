@@ -19,6 +19,16 @@
         </div>
         
         <div class="nav-right" style="display: flex; align-items: center; gap: 15px;">
+            <!-- AI树洞 -->
+            <div class="nav-icon-btn" onclick="window.location.href='ai_chat.html'" title="AI树洞">
+                <i class="ri-robot-2-line"></i>
+            </div>
+
+            <!-- 真正匿名树洞 -->
+            <div class="nav-icon-btn" onclick="window.location.href='anonymous.html'" title="匿名树洞">
+                <i class="ri-spy-line"></i>
+            </div>
+
             <!-- 时光胶囊 -->
             <div class="nav-icon-btn" onclick="showTimeCapsuleModal()" title="时光胶囊">
                 <i class="ri-capsule-line"></i>
@@ -101,11 +111,14 @@
 
             <!-- 右侧：预留拓展区域 -->
             <div class="feed-sidebar-column">
-                <div class="sidebar-placeholder-card">
-                    <div class="placeholder-content">
-                        <i class="ri-rocket-2-fill" style="font-size: 32px; color: #cbd5e1; margin-bottom: 10px;"></i>
-                        <p>功能拓展区</p>
-                        <span style="font-size: 12px; color: #94a3b8;">这里将放置更多精彩内容</span>
+                <div class="sidebar-card top-users-card">
+                    <div class="card-header" style="padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 10px;">
+                        <h3 style="font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <i class="ri-trophy-line" style="color: #ff9f43;"></i> Top10洞主
+                        </h3>
+                    </div>
+                    <div id="top-users-list" class="top-users-list">
+                        <div style="text-align: center; color: #999; padding: 20px;">加载中...</div>
                     </div>
                 </div>
             </div>
@@ -179,6 +192,7 @@
                         <button id="tab-my-holes" class="uc-tab active" onclick="switchUcTab('my-holes')">我的发布</button>
                         <button id="tab-my-favorites" class="uc-tab" onclick="switchUcTab('my-favorites')">我的收藏</button>
                         <button id="tab-my-follows" class="uc-tab" onclick="switchUcTab('my-follows')">我的关注</button>
+                        <button id="tab-my-fans" class="uc-tab" onclick="switchUcTab('my-fans')">我的粉丝</button>
                     </div>
                     <div id="my-holes-list" class="my-holes-list">
                         <!-- 我的树洞列表 -->
@@ -188,6 +202,9 @@
                     </div>
                     <div id="my-follows-list" class="my-holes-list" style="display: none;">
                         <!-- 我的关注列表 -->
+                    </div>
+                    <div id="my-fans-list" class="my-holes-list" style="display: none;">
+                        <!-- 我的粉丝列表 -->
                     </div>
                 </div>
             </div>
